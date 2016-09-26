@@ -66,9 +66,16 @@ define('ui/components/machine/driver-%%DRIVERNAME%%/component', ['exports', 'emb
 			});
 		    },
 
-                    selectNetwork: function() {
-			this.set('step', 6);
-			this.apiRequest('listTemplates', { templatefilter: 'self', zoneid: this.get('model.%%DRIVERNAME%%Config.zoneid') }).then((res) => {
+		    selectNetwork: function() {
+                        this.set('step', 6);
+			let templatestype = [ { "id": "self", "name": "Private" }, { "id": "featured", "name": "Public" } ];
+                        this.set('avtemplatestype', templatestype);
+                        this.set('step', 7);
+                    },
+
+                    selectTemplateType: function() {
+			this.set('step', 8);
+			this.apiRequest('listTemplates', { templatefilter: this.get('model.%%DRIVERNAME%%Config.templatefilter'), zoneid: this.get('model.%%DRIVERNAME%%Config.zoneid') }).then((res) => {
  	                    let templates = [];
 			    (res.listtemplatesresponse.template || []).forEach((temp) => {
                                 let obj = {
@@ -78,7 +85,7 @@ define('ui/components/machine/driver-%%DRIVERNAME%%/component', ['exports', 'emb
                                 templates.push(obj);
                             });
                             this.set('avtemplates', templates);
-                            this.set('step', 7);
+                            this.set('step', 9);
 		        }, (err) => {
                             let errors = this.get('errors') || [];
                             errors.pushObject(this.apiErrorMessage(err, '', '', 'No templates could be found!'));
@@ -88,7 +95,7 @@ define('ui/components/machine/driver-%%DRIVERNAME%%/component', ['exports', 'emb
                     },
 
                     selectTemplate: function() {
-			this.set('step', 8);
+			this.set('step', 10);
                         this.apiRequest('listServiceOfferings', { issystem: 'false' }).then((res) => {
                             let serviceofferings = [];
                             (res.listserviceofferingsresponse.serviceoffering || []).forEach((servoff) => {
@@ -99,7 +106,7 @@ define('ui/components/machine/driver-%%DRIVERNAME%%/component', ['exports', 'emb
                                 serviceofferings.push(obj);
                             });
                             this.set('avservofferings', serviceofferings);
-                            this.set('step', 9);
+                            this.set('step', 11);
                         }, (err) => {
                             let errors = this.get('errors') || [];
                             errors.pushObject(this.apiErrorMessage(err, '', '', 'No service offerings found!'));
@@ -109,8 +116,8 @@ define('ui/components/machine/driver-%%DRIVERNAME%%/component', ['exports', 'emb
                     },
 
 		    setInstance: function() {
-			this.set('step', 10);
-			this.set('step', 11);
+			this.set('step', 12);
+			this.set('step', 13);
 	  	    }
 		},
 
@@ -181,10 +188,13 @@ define('ui/components/machine/driver-%%DRIVERNAME%%/component', ['exports', 'emb
                 isStep9: Ember.computed.equal('step', 9),
                 isStep10: Ember.computed.equal('step', 10),
                 isStep11: Ember.computed.equal('step', 11),
+		isStep12: Ember.computed.equal('step', 12),
+		isStep13: Ember.computed.equal('step', 13),
 		isGteStep3: Ember.computed.gte('step', 3),
 		isGteStep5: Ember.computed.gte('step', 5),
 		isGteStep7: Ember.computed.gte('step', 7),
                 isGteStep9: Ember.computed.gte('step', 9),
 		isGteStep11: Ember.computed.gte('step', 11),
+		isGteStep13: Ember.computed.gte('step', 13),
 	});
 });

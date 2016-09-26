@@ -118,20 +118,20 @@
 <section class="horizontal-form r-pt0 {{unless isGteStep7 'hide'}}">
         <div class="container-fluid">
                 <div class="over-hr r-mt20 r-mb20">
-                        <span>Template</span>
+                        <span>Template Type</span>
                 </div>
                 <div class="row {{if isStep7 'form-group'}}">
                         <div class="col-sm-12 col-md-2 form-label">
-                                <label class="form-control-static">Template</label>
+                                <label class="form-control-static">Template Type</label>
                         </div>
                         <div class="col-sm-12 col-md-8">
-                          {{new-select classNames="form-control" content=avtemplates prompt='Please select a template' optionLabelPath='name' optionValuePath='id' value=model.%%DRIVERNAME%%Config.templateid }}
+                          {{new-select classNames="form-control" content=avtemplatestype prompt='Please select a template type' optionLabelPath='name' optionValuePath='id' value=model.%%DRIVERNAME%%Config.templatefilter }}
                         </div>
                 </div>
         </div>
         {{#if isStep7}} {{top-errors errors=errors}}
         <div class="footer-actions">
-                <button {{action "selectTemplate"}} class="btn btn-primary">Continue</button> <button {{action "cancel"}} class="btn btn-link">Cancel</button>
+                <button {{action "selectTemplateType"}} class="btn btn-primary">Continue</button> <button {{action "cancel"}} class="btn btn-link">Cancel</button>
         </div>
         {{/if}}
 </section>
@@ -147,9 +147,38 @@
 <section class="horizontal-form r-pt0 {{unless isGteStep9 'hide'}}">
         <div class="container-fluid">
                 <div class="over-hr r-mt20 r-mb20">
-                        <span>Service Offering</span>
+                        <span>Template</span>
                 </div>
                 <div class="row {{if isStep9 'form-group'}}">
+                        <div class="col-sm-12 col-md-2 form-label">
+                                <label class="form-control-static">Template</label>
+                        </div>
+                        <div class="col-sm-12 col-md-8">
+                          {{new-select classNames="form-control" content=avtemplates prompt='Please select a template' optionLabelPath='name' optionValuePath='id' value=model.%%DRIVERNAME%%Config.templateid }}
+                        </div>
+                </div>
+        </div>
+        {{#if isStep9}} {{top-errors errors=errors}}
+        <div class="footer-actions">
+                <button {{action "selectTemplate"}} class="btn btn-primary">Continue</button> <button {{action "cancel"}} class="btn btn-link">Cancel</button>
+        </div>
+        {{/if}}
+</section>
+
+<!-- Step 10 -->
+<section class="horizontal-form r-pt0 {{unless isStep10 'hide'}}">
+        <div class="text-center">
+                <i class="icon icon-spinner icon-spin"></i><i>&nbsp; Please wait...</i>
+        </div>
+</section>
+
+<!-- Step 11 -->
+<section class="horizontal-form r-pt0 {{unless isGteStep11 'hide'}}">
+        <div class="container-fluid">
+                <div class="over-hr r-mt20 r-mb20">
+                        <span>Service Offering</span>
+                </div>
+                <div class="row {{if isStep11 'form-group'}}">
                         <div class="col-sm-12 col-md-2 form-label">
                                 <label class="form-control-static">ServiceOffering</label>
                         </div>
@@ -158,22 +187,22 @@
                         </div>
                 </div>
         </div>
-        {{#if isStep9}} {{top-errors errors=errors}}
+        {{#if isStep11}} {{top-errors errors=errors}}
         <div class="footer-actions">
                 <button {{action "setInstance"}} class="btn btn-primary">Continue</button> <button {{action "cancel"}} class="btn btn-link">Cancel</button>
         </div>
         {{/if}}
 </section>
 
-<!-- Step 10 -->
-<section class="horizontal-form r-pt0 {{unless isStep10 'hide'}}">
+<!-- Step 12 -->
+<section class="horizontal-form r-pt0 {{unless isStep12 'hide'}}">
 	<div class="text-center">
 		<i class="icon icon-spinner icon-spin"></i><i>&nbsp; Please wait...</i>
 	</div>
 </section>
 
-<!-- Step 11 -->
-<section class="horizontal-form r-pt0 {{unless isGteStep11 'hide'}}">
+<!-- Step 13 -->
+<section class="horizontal-form r-pt0 {{unless isGteStep13 'hide'}}">
 	<div class="container-fluid">
 		<div class="over-hr r-mt20 r-mb20">
 			<span>INSTANCE</span>
