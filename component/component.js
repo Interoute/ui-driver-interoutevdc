@@ -11,16 +11,21 @@ define('ui/components/machine/driver-%%DRIVERNAME%%/component', ['exports', 'emb
 				apikey: '',
 				secretkey: '',
 				zoneid: null,
-                                vdcregion: 'Europe',
+                                vdcregion: '',
                                 networkid: null,
 				templateid: null,
 				serviceofferingid: null,
+				diskofferingid: null,
+				disksize: null,
 			});
 
 			this.set('model', this.get('store').createRecord({
 				type: 'machine',
 				'%%DRIVERNAME%%Config': config
 			}));
+
+			let regions = [ { "id": "Asia", "name": "Asia" }, { "id": "Europe", "name": "EU" }, { "id": "USA", "name": "US" } ];
+                        this.set('avregions', regions);
 		},
 		actions: {
 		    cloudAuth: function() {
@@ -115,9 +120,32 @@ define('ui/components/machine/driver-%%DRIVERNAME%%/component', ['exports', 'emb
                         });
                     },
 
+		    selectServiceOffering: function() {
+                        this.set('step', 12);
+                        this.apiRequest('listDiskOfferings').then((res) => {
+                            let diskofferings = [];
+			    diskofferings.push({ "id": null, "name": "No extra disks" });
+                            (res.listdiskofferingsresponse.diskoffering || []).forEach((diskoff) => {
+				if ( diskoff.disksize == 0 ) {
+                            	    let obj = {
+                                	    id: diskoff.id,
+	                                    name: diskoff.name
+        	                        };
+                	             diskofferings.push(obj);
+                            }});
+                            this.set('avdiskofferings', diskofferings);
+                            this.set('step', 13);
+                        }, (err) => {
+                            let errors = this.get('errors') || [];
+                            errors.pushObject(this.apiErrorMessage(err, '', '', 'No disk offerings found!'));
+                            this.set('errors', errors);
+                            this.set('step', 3);
+                        });
+                    },
+
 		    setInstance: function() {
-			this.set('step', 12);
-			this.set('step', 13);
+			this.set('step', 14);
+			this.set('step', 15);
 	  	    }
 		},
 
@@ -190,11 +218,14 @@ define('ui/components/machine/driver-%%DRIVERNAME%%/component', ['exports', 'emb
                 isStep11: Ember.computed.equal('step', 11),
 		isStep12: Ember.computed.equal('step', 12),
 		isStep13: Ember.computed.equal('step', 13),
+                isStep14: Ember.computed.equal('step', 14),
+                isStep15: Ember.computed.equal('step', 15),
 		isGteStep3: Ember.computed.gte('step', 3),
 		isGteStep5: Ember.computed.gte('step', 5),
 		isGteStep7: Ember.computed.gte('step', 7),
                 isGteStep9: Ember.computed.gte('step', 9),
 		isGteStep11: Ember.computed.gte('step', 11),
 		isGteStep13: Ember.computed.gte('step', 13),
+		isGteStep15: Ember.computed.gte('step', 15),
 	});
 });

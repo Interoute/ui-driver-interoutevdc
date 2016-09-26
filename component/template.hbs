@@ -33,10 +33,7 @@
                                         <label class="form-control-static">VDC Region</label>
                                 </div>
                                 <div class="col-sm-12 col-md-10">
-                                        {{#if isStep1}} {{input type="text" value=model.%%DRIVERNAME%%Config.vdcregion classNames="form-control" placeholder="Your VDC Region"}} {{else}}
-                                        <div class="form-control-static">
-                                                {{model.%%DRIVERNAME%%Config.vdcregion}}
-                                        </div>
+					{{#if isStep1}} {{new-select classNames="form-control" content=avregions prompt='Please select a region' optionLabelPath='name' optionValuePath='id' value=model.%%DRIVERNAME%%Config.vdcregion}} 
                                         {{/if}}
                                 </div>
                         </div>
@@ -183,26 +180,56 @@
                                 <label class="form-control-static">ServiceOffering</label>
                         </div>
                         <div class="col-sm-12 col-md-8">
-                          {{new-select classNames="form-control" content=avservofferings optionLabelPath='name' optionValuePath='id' value=model.%%DRIVERNAME%%Config.serviceofferingid }}
+                          {{new-select classNames="form-control" content=avservofferings  prompt='Please select a service offering (format: RAM-CPU)' optionLabelPath='name' optionValuePath='id' value=model.%%DRIVERNAME%%Config.serviceofferingid }}
                         </div>
                 </div>
         </div>
         {{#if isStep11}} {{top-errors errors=errors}}
         <div class="footer-actions">
-                <button {{action "setInstance"}} class="btn btn-primary">Continue</button> <button {{action "cancel"}} class="btn btn-link">Cancel</button>
+                <button {{action "selectServiceOffering"}} class="btn btn-primary">Continue</button> <button {{action "cancel"}} class="btn btn-link">Cancel</button>
         </div>
         {{/if}}
 </section>
 
 <!-- Step 12 -->
 <section class="horizontal-form r-pt0 {{unless isStep12 'hide'}}">
+        <div class="text-center">
+                <i class="icon icon-spinner icon-spin"></i><i>&nbsp; Please wait...</i>
+        </div>
+</section>
+
+<!-- Step 13 -->
+<section class="horizontal-form r-pt0 {{unless isGteStep13 'hide'}}">
+        <div class="container-fluid">
+                <div class="over-hr r-mt20 r-mb20">
+                        <span>Disk Offering</span>
+                </div>
+                <div class="row {{if isStep13 'form-group'}}">
+                        <div class="col-sm-12 col-md-2 form-label">
+                                <label class="form-control-static">ServiceOffering</label>
+                        </div>
+                        <div class="col-sm-12 col-md-8">
+                          {{new-select classNames="form-control" content=avdiskofferings  prompt='Please select a disk offering (extra/DATA disk)' optionLabelPath='name' optionValuePath='id' value=model.%%DRIVERNAME%%Config.diskofferingid }}
+			  {{input type="text" value=model.%%DRIVERNAME%%Config.disksize classNames="form-control" placeholder="Disk size (GB)"}}
+			</div>
+                </div>
+        </div>
+        {{#if isStep13}} {{top-errors errors=errors}}
+        <div class="footer-actions">
+                <button {{action "setInstance"}} class="btn btn-primary">Continue</button> <button {{action "cancel"}} class="btn btn-link">Cancel</button>
+        </div>
+        {{/if}}
+</section>
+
+<!-- Step 14 -->
+<section class="horizontal-form r-pt0 {{unless isStep14 'hide'}}">
 	<div class="text-center">
 		<i class="icon icon-spinner icon-spin"></i><i>&nbsp; Please wait...</i>
 	</div>
 </section>
 
-<!-- Step 13 -->
-<section class="horizontal-form r-pt0 {{unless isGteStep13 'hide'}}">
+<!-- Step 15 -->
+<section class="horizontal-form r-pt0 {{unless isGteStep15 'hide'}}">
 	<div class="container-fluid">
 		<div class="over-hr r-mt20 r-mb20">
 			<span>INSTANCE</span>
