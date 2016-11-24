@@ -1,7 +1,17 @@
 define('ui/components/machine/driver-interoutevdc/component', ['exports', 'ember', 'ui/mixins/driver'],
 	function(exports, _ember, _uiMixinsDriver) {
-		exports['default'] = _ember['default'].Component.extend(_uiMixinsDriver['default'], {
+		var Ember = _ember.default;
+		var DriverMixin = _uiMixinsDriver.default;
+
+		exports['default'] = Ember.Component.extend(DriverMixin, {
 		driverName: 'interoutevdc',
+		config: Ember.computed.alias('model.interoutevdcConfig'),
+
+		actions: {
+			setTransport(str) {
+				this.set('config.transport', str);
+			},
+		},
 
 		// Write your component here, starting with setting 'model' to a machine with your config populated
 		bootstrap: function() {
@@ -19,14 +29,20 @@ define('ui/components/machine/driver-interoutevdc/component', ['exports', 'ember
 				disksize: null,
 			});
 
+                        let type = 'host';
+                        if (!this.get('useHost')) {
+                                type = 'machine';
+                        }
+
 			this.set('model', this.get('store').createRecord({
-				type: 'machine',
+				type: type,
 				'interoutevdcConfig': config
 			}));
 
 			let regions = [ { "id": "Asia", "name": "Asia" }, { "id": "Europe", "name": "EU" }, { "id": "USA", "name": "US" } ];
                         this.set('avregions', regions);
-		},
+		}.on('init'),
+
 		actions: {
 		    cloudAuth: function() {
 			    this.set('step', 2);
@@ -236,7 +252,7 @@ exports["default"] = Ember.HTMLBars.template((function() {
   var child0 = (function() {
     return {
       meta: {
-        "revision": "Ember@2.8.1",
+        "revision": "Ember@2.9.1",
         "loc": {
           "source": null,
           "start": {
@@ -278,7 +294,7 @@ exports["default"] = Ember.HTMLBars.template((function() {
   var child1 = (function() {
     return {
       meta: {
-        "revision": "Ember@2.8.1",
+        "revision": "Ember@2.9.1",
         "loc": {
           "source": null,
           "start": {
@@ -327,7 +343,7 @@ exports["default"] = Ember.HTMLBars.template((function() {
   var child2 = (function() {
     return {
       meta: {
-        "revision": "Ember@2.8.1",
+        "revision": "Ember@2.9.1",
         "loc": {
           "source": null,
           "start": {
@@ -369,7 +385,7 @@ exports["default"] = Ember.HTMLBars.template((function() {
   var child3 = (function() {
     return {
       meta: {
-        "revision": "Ember@2.8.1",
+        "revision": "Ember@2.9.1",
         "loc": {
           "source": null,
           "start": {
@@ -410,7 +426,7 @@ exports["default"] = Ember.HTMLBars.template((function() {
   var child4 = (function() {
     return {
       meta: {
-        "revision": "Ember@2.8.1",
+        "revision": "Ember@2.9.1",
         "loc": {
           "source": null,
           "start": {
@@ -452,7 +468,7 @@ exports["default"] = Ember.HTMLBars.template((function() {
   var child5 = (function() {
     return {
       meta: {
-        "revision": "Ember@2.8.1",
+        "revision": "Ember@2.9.1",
         "loc": {
           "source": null,
           "start": {
@@ -523,7 +539,7 @@ exports["default"] = Ember.HTMLBars.template((function() {
   var child6 = (function() {
     return {
       meta: {
-        "revision": "Ember@2.8.1",
+        "revision": "Ember@2.9.1",
         "loc": {
           "source": null,
           "start": {
@@ -593,7 +609,7 @@ exports["default"] = Ember.HTMLBars.template((function() {
   var child7 = (function() {
     return {
       meta: {
-        "revision": "Ember@2.8.1",
+        "revision": "Ember@2.9.1",
         "loc": {
           "source": null,
           "start": {
@@ -663,7 +679,7 @@ exports["default"] = Ember.HTMLBars.template((function() {
   var child8 = (function() {
     return {
       meta: {
-        "revision": "Ember@2.8.1",
+        "revision": "Ember@2.9.1",
         "loc": {
           "source": null,
           "start": {
@@ -733,7 +749,7 @@ exports["default"] = Ember.HTMLBars.template((function() {
   var child9 = (function() {
     return {
       meta: {
-        "revision": "Ember@2.8.1",
+        "revision": "Ember@2.9.1",
         "loc": {
           "source": null,
           "start": {
@@ -803,7 +819,7 @@ exports["default"] = Ember.HTMLBars.template((function() {
   var child10 = (function() {
     return {
       meta: {
-        "revision": "Ember@2.8.1",
+        "revision": "Ember@2.9.1",
         "loc": {
           "source": null,
           "start": {
@@ -873,7 +889,7 @@ exports["default"] = Ember.HTMLBars.template((function() {
   var child11 = (function() {
     return {
       meta: {
-        "revision": "Ember@2.8.1",
+        "revision": "Ember@2.9.1",
         "loc": {
           "source": null,
           "start": {
@@ -942,7 +958,7 @@ exports["default"] = Ember.HTMLBars.template((function() {
   }());
   return {
     meta: {
-      "revision": "Ember@2.8.1",
+      "revision": "Ember@2.9.1",
       "loc": {
         "source": null,
         "start": {
