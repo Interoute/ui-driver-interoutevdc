@@ -1,20 +1,14 @@
-define('ui/components/machine/driver-%%DRIVERNAME%%/component', ['exports', 'ember', 'ui/mixins/driver'],
-	function(exports, _ember, _uiMixinsDriver) {
+define('ui/components/machine/driver-%%DRIVERNAME%%/component', ['exports', 'ember', 'ui/mixins/driver', 'ui/components/new-select/component'],
+	function(exports, _ember, _uiMixinsDriver, _newSelect) { 
 		var Ember = _ember.default;
 		var DriverMixin = _uiMixinsDriver.default;
-
+		var avServOfferingsArray = [];
+		var changeServOffering = false;
+		var serviceOfferingName; 
 		exports['default'] = Ember.Component.extend(DriverMixin, {
 		driverName: '%%DRIVERNAME%%',
 		config: Ember.computed.alias('model.%%DRIVERNAME%%Config'),
-
-		actions: {
-			setTransport(str) {
-				this.set('config.transport', str);
-			},
-		},
-
-		// Write your component here, starting with setting 'model' to a machine with your config populated
-		bootstrap: function() {
+		bootstrap: function(){
 			let config = this.get("store").createRecord({
 				type: '%%DRIVERNAME%%Config',
 				apiurl: 'https://myservices.interoute.com/myservices/api/vdc',
@@ -27,6 +21,8 @@ define('ui/components/machine/driver-%%DRIVERNAME%%/component', ['exports', 'emb
 				serviceofferingid: null,
 				diskofferingid: null,
 				disksize: null,
+				cpu: 1,
+				ram: 1
 			});
 
                         let type = 'host';
@@ -40,12 +36,54 @@ define('ui/components/machine/driver-%%DRIVERNAME%%/component', ['exports', 'emb
 			}));
 
 			let regions = [ { "id": "Asia", "name": "Asia" }, { "id": "Europe", "name": "EU" }, { "id": "USA", "name": "US" } ];
+			if ( this.get('model.%%DRIVERNAME%%Config.vdcregion') == '' ) {
+				this.set('model.%%DRIVERNAME%%Config.vdcregion', regions[0].id);
+			}		
                         this.set('avregions', regions);
 		}.on('init'),
 
+		onDidRender: function(e) {
+			let ele = $('#' + this.elementId).eq(0).find('.horizontal-form').not('.hide');
+			let len = ele.length;
+			let selectEle = ele.eq(len -1).find('select');
+			let selectOpt = selectEle.find('option:selected');
+			if (selectEle[0] !== undefined && selectEle[0].selectedIndex === 0 ) { 
+				selectEle[0].selectedIndex = 1;
+			}
+
+			if (changeServOffering) {
+				this.set('model.%%DRIVERNAME%%Config.serviceOfferingName', this.get('model.%%DRIVERNAME%%Config.ram') + '-' + this.get('model.%%DRIVERNAME%%Config.cpu') );
+				serviceOfferingName = this.get('model.%%DRIVERNAME%%Config.ram') + '-' + this.get('model.%%DRIVERNAME%%Config.cpu');
+				changeServOffering = false;
+			}
+		}.on('didRender'),
+
+		resetSiblingMenus:function(e) {
+ 			$('section.horizontal-form').removeClass('selected-item');
+			$('select option[value="' + e.id +'"]').closest('section.horizontal-form').addClass('selected-item');
+
+			var classStr= $('select option[value="' + e.id +'"]').closest('section.horizontal-form').attr('class');
+			var start= $('select option[value="' + e.id +'"]').closest('section.horizontal-form').attr('class').indexOf('step');
+			var end = classStr.substring(start + 4).indexOf(' ');
+			var stepEdited = Number(classStr.substr(start + 4, end));
+			this.set('step', stepEdited);
+
+			$.each( $('section.horizontal-form.selected-item ~ section.horizontal-form select'), function(key, select){
+				select.selectedIndex= 1;
+			});
+		},
+
+		setRAMCPU(e) {
+                       changeServOffering = true;
+           	},
+                      
 		actions: {
+		     setTransport(str){
+			this.set('config.transport', str);
+		     },
+
 		    cloudAuth: function() {
-			    this.set('step', 2);
+			    this.set('step', 2);	
 			    this.apiRequest('listZones').then((res) => {
 		            let zones = [];
 		            res.listzonesresponse.zone.forEach((zone) => {
@@ -55,7 +93,9 @@ define('ui/components/machine/driver-%%DRIVERNAME%%/component', ['exports', 'emb
 		                };
 		                zones.push(obj);
 		            });
-		            this.set('avzones', zones);
+		            
+			    this.set('model.%%DRIVERNAME%%Config.zoneid', zones[0].id);
+			    this.set('avzones', zones);
 		            this.set('step', 3);
 		        }, (err) => {
 		            let errors = this.get('errors') || [];
@@ -64,8 +104,8 @@ define('ui/components/machine/driver-%%DRIVERNAME%%/component', ['exports', 'emb
 		            this.set('step', 1);
 		        });
 		    },
-
-		    selectZone: function() {
+		                                            
+		  selectZone: function() {	
 			this.set('step', 4);
 			this.apiRequest('listNetworks', { zoneid: this.get('model.%%DRIVERNAME%%Config.zoneid') }).then((res) => {
 			    let networks = [];
@@ -78,7 +118,7 @@ define('ui/components/machine/driver-%%DRIVERNAME%%/component', ['exports', 'emb
 			    });
 			    this.set('avnetworks', networks);
 			    this.set('step', 5);
-
+			    this.set('model.%%DRIVERNAME%%Config.networkid', networks[0].id);
 			}, (err) => {
 			    let errors = this.get('errors') || [];
 			    errors.pushObject(this.apiErrorMessage(err, '', '', 'WARNING No zone could be found!'));
@@ -87,17 +127,25 @@ define('ui/components/machine/driver-%%DRIVERNAME%%/component', ['exports', 'emb
 			});
 		    },
 
-		    selectNetwork: function() {
-                        this.set('step', 6);
+		    selectNetwork: function() {        
+              		this.set('step', 6);
 			let templatestype = [ { "id": "self", "name": "Private" }, { "id": "featured", "name": "Public" } ];
-                        this.set('avtemplatestype', templatestype);
+   			if (this.get('model.%%DRIVERNAME%%Config.templatefilter') == ''){
+				this.set('model.%%DRIVERNAME%%Config.templatefilter', templatestype[0].id);
+			}
+	                this.set('avtemplatestype', templatestype);
                         this.set('step', 7);
                     },
 
                     selectTemplateType: function() {
 			this.set('step', 8);
-			this.apiRequest('listTemplates', { templatefilter: this.get('model.%%DRIVERNAME%%Config.templatefilter'), zoneid: this.get('model.%%DRIVERNAME%%Config.zoneid') }).then((res) => {
- 	                    let templates = [];
+                        if (this.get('model.%%DRIVERNAME%%Config.templatefilter') == 'self'){
+                            var templatekeyword = '';
+                        } else {
+                            var templatekeyword = 'ranchernode';
+                        }
+			this.apiRequest('listTemplates', { templatefilter: this.get('model.%%DRIVERNAME%%Config.templatefilter'), zoneid: this.get('model.%%DRIVERNAME%%Config.zoneid'), keyword: templatekeyword }).then((res) => {
+			    let templates = [];
 			    (res.listtemplatesresponse.template || []).forEach((temp) => {
                                 let obj = {
                                     id: temp.id,
@@ -105,15 +153,28 @@ define('ui/components/machine/driver-%%DRIVERNAME%%/component', ['exports', 'emb
                                 };
                                 templates.push(obj);
                             });
-                            this.set('avtemplates', templates);
-                            this.set('step', 9);
-		        }, (err) => {
+
+
+		    	    if (templates.length == 0) {
+				let errors = this.get('errors') || [];
+                            	errors.pushObject(this.apiErrorMessage('', '', '', 'No templates could be found!'));
+                            	this.set('errors', errors);
+                            	this.set('step', 3);
+			    } else {  
+				this.set('model.%%DRIVERNAME%%Config.templateid', templates[0].id);		
+                            	this.set('avtemplates', templates);
+                            	this.set('step', 9);
+			    }
+
+
+			}, (err) => {
                             let errors = this.get('errors') || [];
                             errors.pushObject(this.apiErrorMessage(err, '', '', 'No templates could be found!'));
                             this.set('errors', errors);
                             this.set('step', 3);
                         });
-                    },
+
+},
 
                     selectTemplate: function() {
 			this.set('step', 10);
@@ -126,8 +187,14 @@ define('ui/components/machine/driver-%%DRIVERNAME%%/component', ['exports', 'emb
                                 };
                                 serviceofferings.push(obj);
                             });
+			    
+			    	this.set('model.interoutevdcConfig.ram', 1);
+				this.set('model.interoutevdcConfig.cpu', 1);
+				this.set('model.%%DRIVERNAME%%Config.serviceOfferingName', '1024-1'); 
+			    
                             this.set('avservofferings', serviceofferings);
                             this.set('step', 11);
+			    avServOfferingsArray.push(serviceofferings);
                         }, (err) => {
                             let errors = this.get('errors') || [];
                             errors.pushObject(this.apiErrorMessage(err, '', '', 'No service offerings found!'));
@@ -135,6 +202,41 @@ define('ui/components/machine/driver-%%DRIVERNAME%%/component', ['exports', 'emb
                             this.set('step', 3);
                         });
                     },
+
+		
+       		 getServiceOfferingId: function() {         	
+         			var result = this.apiRequest('listServiceOfferings', { issystem: 'false', name: this.get('model.%%DRIVERNAME%%Config.serviceOfferingName') }).then((res) => {
+				this.set('model.%%DRIVERNAME%%Config.serviceofferingid', res.listserviceofferingsresponse.serviceoffering[0].id);			
+				return this;
+					
+         		}, (err) => {
+				let errors = this.get('errors') || [];
+           			errors.pushObject(this.apiErrorMessage(err, '', '', 'Could not retrieve service offering id'));
+				this.set('errors', errors);
+         		});
+
+                        this.apiRequest('listDiskOfferings').then((res) => {
+                        	let diskofferings = [];
+                        	diskofferings.push({ "id": null, "name": "No extra disks" });
+                        	(res.listdiskofferingsresponse.diskoffering || []).forEach((diskoff) => {
+                              		if ( diskoff.disksize == 0 ) {
+                               			let obj = {
+                                      		 id: diskoff.id,
+                                       		 name: diskoff.name
+                                      		};
+                               			 diskofferings.push(obj);
+                        		 }});
+                        		this.set('avdiskofferings', diskofferings);
+					this.set('model.%%DRIVERNAME%%Config.disksize', null);
+					this.set('model.%%DRIVERNAME%%Config.diskofferingid', null);
+                        	 	this.set('step', 13);
+                       	 		}, (err) => {
+                		            let errors = this.get('errors') || [];
+                        		   errors.pushObject(this.apiErrorMessage(err, '', '', 'No disk offerings found!'));
+                           			this.set('errors', errors);
+                           		 	this.set('step', 3);
+                       			});				
+		    },
 
 		    selectServiceOffering: function() {
                         this.set('step', 12);
@@ -146,9 +248,10 @@ define('ui/components/machine/driver-%%DRIVERNAME%%/component', ['exports', 'emb
                             	    let obj = {
                                 	    id: diskoff.id,
 	                                    name: diskoff.name
-        	                        };
+        	                     };
                 	             diskofferings.push(obj);
-                            }});
+                            	}
+			    });
                             this.set('avdiskofferings', diskofferings);
                             this.set('step', 13);
                         }, (err) => {
@@ -159,12 +262,87 @@ define('ui/components/machine/driver-%%DRIVERNAME%%/component', ['exports', 'emb
                         });
                     },
 
+		    setRAMCPUOffering: function(e){
+ 			if (e.target.id == 'cpuoffering' && (this.get('model.%%DRIVERNAME%%Config.cpu') >= 1 && this.get('model.%%DRIVERNAME%%Config.cpu') < 16) ) {
+				this.set('model.%%DRIVERNAME%%Config.cpu', Number(e.target.value));
+				var cpu = this.get('model.%%DRIVERNAME%%Config.cpu');
+                                var vram = this.get('model.%%DRIVERNAME%%Config.ram');
+                                this.set('model.%%DRIVERNAME%%Config.serviceOfferingName', (vram * 1024) + '-' + cpu );
+
+			}		
+
+			if (e.target.id == 'vramoffering' && (  this.get('model.%%DRIVERNAME%%Config.ram') >= 1 && this.get('model.%%DRIVERNAME%%Config.ram') < 1024 )  ) {
+				 this.set('model.%%DRIVERNAME%%Config.ram', Number(e.target.value));
+				 var cpu = this.get('model.%%DRIVERNAME%%Config.cpu');
+                                var vram = this.get('model.%%DRIVERNAME%%Config.ram');
+                                this.set('model.%%DRIVERNAME%%Config.serviceOfferingName', (vram * 1024) + '-' + cpu );
+
+			}
+	
+			if (this.get('model.%%DRIVERNAME%%Config.cpu') <= 0) {
+				this.set('model.%%DRIVERNAME%%Config.cpu', 1);
+				$('#cpuoffering').val('1');
+			}
+
+			if (this.get('model.%%DRIVERNAME%%Config.cpu') > 16) {
+                                this.set('model.%%DRIVERNAME%%Config.cpu', 16);
+				$('#cpuoffering').val('16')
+                        }
+
+			// max min vRAM
+			if (this.get('model.%%DRIVERNAME%%Config.ram') <= 0) {
+                                this.set('model.%%DRIVERNAME%%Config.ram', 1);
+				$('#vramoffering').val('1');
+                        }
+
+                        if (this.get('model.%%DRIVERNAME%%Config.ram') > 1024) {
+                           this.set('model.%%DRIVERNAME%%Config.ram', 1024);
+				$('#vramoffering').val('1024')
+			}
+
+                    },
+
+
+                    lessCPU: function(e){
+			if ( this.get('model.%%DRIVERNAME%%Config.cpu') > 1  ) {
+				var cpu = this.get('model.%%DRIVERNAME%%Config.cpu') - 1;
+				var vram = this.get('model.%%DRIVERNAME%%Config.ram');
+				this.set('model.%%DRIVERNAME%%Config.cpu', cpu  ); 
+				this.set('model.%%DRIVERNAME%%Config.serviceOfferingName', (vram * 1024) + '-' + cpu );
+			}		
+                    },
+
+                    moreCPU: function(e){
+			if ( this.get('model.%%DRIVERNAME%%Config.cpu') < 16  ) {
+                                var cpu = this.get('model.%%DRIVERNAME%%Config.cpu') + 1;
+				var vram = this.get('model.%%DRIVERNAME%%Config.ram');
+				this.set('model.%%DRIVERNAME%%Config.cpu', cpu );
+                      		this.set('model.%%DRIVERNAME%%Config.serviceOfferingName', (vram * 1024) + '-' + cpu );
+			 }
+                    },
+
+		    lessVRAM: function(e){
+			if ( this.get('model.%%DRIVERNAME%%Config.ram') > 1  ) {
+                                var vram = this.get('model.%%DRIVERNAME%%Config.ram') / 2;
+				this.set('model.%%DRIVERNAME%%Config.ram', vram );
+                                this.set('model.%%DRIVERNAME%%Config.serviceOfferingName', (vram * 1024) + '-' + this.get('model.%%DRIVERNAME%%Config.cpu') );
+                        }
+               	    },
+
+               	    moreVRAM: function(e){
+			if ( this.get('model.%%DRIVERNAME%%Config.ram') < 64  ) {
+                                var vram = this.get('model.%%DRIVERNAME%%Config.ram') * 2;
+				this.set('model.%%DRIVERNAME%%Config.ram', vram );
+                                this.set('model.%%DRIVERNAME%%Config.serviceOfferingName', (vram * 1024) + '-' + this.get('model.%%DRIVERNAME%%Config.cpu') );
+                         }
+                    },
+
 		    setInstance: function() {
 			this.set('step', 14);
 			this.set('step', 15);
 	  	    }
 		},
-
+		
 		apiRequest: function(command, params) {
 		    let url		= this.get('app.proxyEndpoint') + '/' + this.get('model.%%DRIVERNAME%%Config.apiurl');
 		    params		= params || {};
@@ -228,7 +406,7 @@ define('ui/components/machine/driver-%%DRIVERNAME%%/component', ['exports', 'emb
 		isStep5: Ember.computed.equal('step', 5),
 		isStep6: Ember.computed.equal('step', 6),
 		isStep7: Ember.computed.equal('step', 7),
-                isStep8: Ember.computed.equal('step', 8),
+		isStep8: Ember.computed.equal('step', 8),
                 isStep9: Ember.computed.equal('step', 9),
                 isStep10: Ember.computed.equal('step', 10),
                 isStep11: Ember.computed.equal('step', 11),

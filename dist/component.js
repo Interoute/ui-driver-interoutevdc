@@ -1,20 +1,14 @@
-define('ui/components/machine/driver-interoutevdc/component', ['exports', 'ember', 'ui/mixins/driver'],
-	function(exports, _ember, _uiMixinsDriver) {
+define('ui/components/machine/driver-interoutevdc/component', ['exports', 'ember', 'ui/mixins/driver', 'ui/components/new-select/component'],
+	function(exports, _ember, _uiMixinsDriver, _newSelect) { 
 		var Ember = _ember.default;
 		var DriverMixin = _uiMixinsDriver.default;
-
+		var avServOfferingsArray = [];
+		var changeServOffering = false;
+		var serviceOfferingName; 
 		exports['default'] = Ember.Component.extend(DriverMixin, {
 		driverName: 'interoutevdc',
 		config: Ember.computed.alias('model.interoutevdcConfig'),
-
-		actions: {
-			setTransport(str) {
-				this.set('config.transport', str);
-			},
-		},
-
-		// Write your component here, starting with setting 'model' to a machine with your config populated
-		bootstrap: function() {
+		bootstrap: function(){
 			let config = this.get("store").createRecord({
 				type: 'interoutevdcConfig',
 				apiurl: 'https://myservices.interoute.com/myservices/api/vdc',
@@ -27,6 +21,8 @@ define('ui/components/machine/driver-interoutevdc/component', ['exports', 'ember
 				serviceofferingid: null,
 				diskofferingid: null,
 				disksize: null,
+				cpu: 1,
+				ram: 1
 			});
 
                         let type = 'host';
@@ -40,12 +36,54 @@ define('ui/components/machine/driver-interoutevdc/component', ['exports', 'ember
 			}));
 
 			let regions = [ { "id": "Asia", "name": "Asia" }, { "id": "Europe", "name": "EU" }, { "id": "USA", "name": "US" } ];
+			if ( this.get('model.interoutevdcConfig.vdcregion') == '' ) {
+				this.set('model.interoutevdcConfig.vdcregion', regions[0].id);
+			}		
                         this.set('avregions', regions);
 		}.on('init'),
 
+		onDidRender: function(e) {
+			let ele = $('#' + this.elementId).eq(0).find('.horizontal-form').not('.hide');
+			let len = ele.length;
+			let selectEle = ele.eq(len -1).find('select');
+			let selectOpt = selectEle.find('option:selected');
+			if (selectEle[0] !== undefined && selectEle[0].selectedIndex === 0 ) { 
+				selectEle[0].selectedIndex = 1;
+			}
+
+			if (changeServOffering) {
+				this.set('model.interoutevdcConfig.serviceOfferingName', this.get('model.interoutevdcConfig.ram') + '-' + this.get('model.interoutevdcConfig.cpu') );
+				serviceOfferingName = this.get('model.interoutevdcConfig.ram') + '-' + this.get('model.interoutevdcConfig.cpu');
+				changeServOffering = false;
+			}
+		}.on('didRender'),
+
+		resetSiblingMenus:function(e) {
+ 			$('section.horizontal-form').removeClass('selected-item');
+			$('select option[value="' + e.id +'"]').closest('section.horizontal-form').addClass('selected-item');
+
+			var classStr= $('select option[value="' + e.id +'"]').closest('section.horizontal-form').attr('class');
+			var start= $('select option[value="' + e.id +'"]').closest('section.horizontal-form').attr('class').indexOf('step');
+			var end = classStr.substring(start + 4).indexOf(' ');
+			var stepEdited = Number(classStr.substr(start + 4, end));
+			this.set('step', stepEdited);
+
+			$.each( $('section.horizontal-form.selected-item ~ section.horizontal-form select'), function(key, select){
+				select.selectedIndex= 1;
+			});
+		},
+
+		setRAMCPU(e) {
+                       changeServOffering = true;
+           	},
+                      
 		actions: {
+		     setTransport(str){
+			this.set('config.transport', str);
+		     },
+
 		    cloudAuth: function() {
-			    this.set('step', 2);
+			    this.set('step', 2);	
 			    this.apiRequest('listZones').then((res) => {
 		            let zones = [];
 		            res.listzonesresponse.zone.forEach((zone) => {
@@ -55,7 +93,9 @@ define('ui/components/machine/driver-interoutevdc/component', ['exports', 'ember
 		                };
 		                zones.push(obj);
 		            });
-		            this.set('avzones', zones);
+		            
+			    this.set('model.interoutevdcConfig.zoneid', zones[0].id);
+			    this.set('avzones', zones);
 		            this.set('step', 3);
 		        }, (err) => {
 		            let errors = this.get('errors') || [];
@@ -64,8 +104,8 @@ define('ui/components/machine/driver-interoutevdc/component', ['exports', 'ember
 		            this.set('step', 1);
 		        });
 		    },
-
-		    selectZone: function() {
+		                                            
+		  selectZone: function() {	
 			this.set('step', 4);
 			this.apiRequest('listNetworks', { zoneid: this.get('model.interoutevdcConfig.zoneid') }).then((res) => {
 			    let networks = [];
@@ -78,7 +118,7 @@ define('ui/components/machine/driver-interoutevdc/component', ['exports', 'ember
 			    });
 			    this.set('avnetworks', networks);
 			    this.set('step', 5);
-
+			    this.set('model.interoutevdcConfig.networkid', networks[0].id);
 			}, (err) => {
 			    let errors = this.get('errors') || [];
 			    errors.pushObject(this.apiErrorMessage(err, '', '', 'WARNING No zone could be found!'));
@@ -87,17 +127,25 @@ define('ui/components/machine/driver-interoutevdc/component', ['exports', 'ember
 			});
 		    },
 
-		    selectNetwork: function() {
-                        this.set('step', 6);
+		    selectNetwork: function() {        
+              		this.set('step', 6);
 			let templatestype = [ { "id": "self", "name": "Private" }, { "id": "featured", "name": "Public" } ];
-                        this.set('avtemplatestype', templatestype);
+   			if (this.get('model.interoutevdcConfig.templatefilter') == ''){
+				this.set('model.interoutevdcConfig.templatefilter', templatestype[0].id);
+			}
+	                this.set('avtemplatestype', templatestype);
                         this.set('step', 7);
                     },
 
                     selectTemplateType: function() {
 			this.set('step', 8);
-			this.apiRequest('listTemplates', { templatefilter: this.get('model.interoutevdcConfig.templatefilter'), zoneid: this.get('model.interoutevdcConfig.zoneid') }).then((res) => {
- 	                    let templates = [];
+                        if (this.get('model.interoutevdcConfig.templatefilter') == 'self'){
+                            var templatekeyword = '';
+                        } else {
+                            var templatekeyword = 'ranchernode';
+                        }
+			this.apiRequest('listTemplates', { templatefilter: this.get('model.interoutevdcConfig.templatefilter'), zoneid: this.get('model.interoutevdcConfig.zoneid'), keyword: templatekeyword }).then((res) => {
+			    let templates = [];
 			    (res.listtemplatesresponse.template || []).forEach((temp) => {
                                 let obj = {
                                     id: temp.id,
@@ -105,15 +153,28 @@ define('ui/components/machine/driver-interoutevdc/component', ['exports', 'ember
                                 };
                                 templates.push(obj);
                             });
-                            this.set('avtemplates', templates);
-                            this.set('step', 9);
-		        }, (err) => {
+
+
+		    	    if (templates.length == 0) {
+				let errors = this.get('errors') || [];
+                            	errors.pushObject(this.apiErrorMessage('', '', '', 'No templates could be found!'));
+                            	this.set('errors', errors);
+                            	this.set('step', 3);
+			    } else {  
+				this.set('model.interoutevdcConfig.templateid', templates[0].id);		
+                            	this.set('avtemplates', templates);
+                            	this.set('step', 9);
+			    }
+
+
+			}, (err) => {
                             let errors = this.get('errors') || [];
                             errors.pushObject(this.apiErrorMessage(err, '', '', 'No templates could be found!'));
                             this.set('errors', errors);
                             this.set('step', 3);
                         });
-                    },
+
+},
 
                     selectTemplate: function() {
 			this.set('step', 10);
@@ -126,8 +187,14 @@ define('ui/components/machine/driver-interoutevdc/component', ['exports', 'ember
                                 };
                                 serviceofferings.push(obj);
                             });
+			    
+			    	this.set('model.interoutevdcConfig.ram', 1);
+				this.set('model.interoutevdcConfig.cpu', 1);
+				this.set('model.interoutevdcConfig.serviceOfferingName', '1024-1'); 
+			    
                             this.set('avservofferings', serviceofferings);
                             this.set('step', 11);
+			    avServOfferingsArray.push(serviceofferings);
                         }, (err) => {
                             let errors = this.get('errors') || [];
                             errors.pushObject(this.apiErrorMessage(err, '', '', 'No service offerings found!'));
@@ -135,6 +202,41 @@ define('ui/components/machine/driver-interoutevdc/component', ['exports', 'ember
                             this.set('step', 3);
                         });
                     },
+
+		
+       		 getServiceOfferingId: function() {         	
+         			var result = this.apiRequest('listServiceOfferings', { issystem: 'false', name: this.get('model.interoutevdcConfig.serviceOfferingName') }).then((res) => {
+				this.set('model.interoutevdcConfig.serviceofferingid', res.listserviceofferingsresponse.serviceoffering[0].id);			
+				return this;
+					
+         		}, (err) => {
+				let errors = this.get('errors') || [];
+           			errors.pushObject(this.apiErrorMessage(err, '', '', 'Could not retrieve service offering id'));
+				this.set('errors', errors);
+         		});
+
+                        this.apiRequest('listDiskOfferings').then((res) => {
+                        	let diskofferings = [];
+                        	diskofferings.push({ "id": null, "name": "No extra disks" });
+                        	(res.listdiskofferingsresponse.diskoffering || []).forEach((diskoff) => {
+                              		if ( diskoff.disksize == 0 ) {
+                               			let obj = {
+                                      		 id: diskoff.id,
+                                       		 name: diskoff.name
+                                      		};
+                               			 diskofferings.push(obj);
+                        		 }});
+                        		this.set('avdiskofferings', diskofferings);
+					this.set('model.interoutevdcConfig.disksize', null);
+					this.set('model.interoutevdcConfig.diskofferingid', null);
+                        	 	this.set('step', 13);
+                       	 		}, (err) => {
+                		            let errors = this.get('errors') || [];
+                        		   errors.pushObject(this.apiErrorMessage(err, '', '', 'No disk offerings found!'));
+                           			this.set('errors', errors);
+                           		 	this.set('step', 3);
+                       			});				
+		    },
 
 		    selectServiceOffering: function() {
                         this.set('step', 12);
@@ -146,9 +248,10 @@ define('ui/components/machine/driver-interoutevdc/component', ['exports', 'ember
                             	    let obj = {
                                 	    id: diskoff.id,
 	                                    name: diskoff.name
-        	                        };
+        	                     };
                 	             diskofferings.push(obj);
-                            }});
+                            	}
+			    });
                             this.set('avdiskofferings', diskofferings);
                             this.set('step', 13);
                         }, (err) => {
@@ -159,12 +262,87 @@ define('ui/components/machine/driver-interoutevdc/component', ['exports', 'ember
                         });
                     },
 
+		    setRAMCPUOffering: function(e){
+ 			if (e.target.id == 'cpuoffering' && (this.get('model.interoutevdcConfig.cpu') >= 1 && this.get('model.interoutevdcConfig.cpu') < 16) ) {
+				this.set('model.interoutevdcConfig.cpu', Number(e.target.value));
+				var cpu = this.get('model.interoutevdcConfig.cpu');
+                                var vram = this.get('model.interoutevdcConfig.ram');
+                                this.set('model.interoutevdcConfig.serviceOfferingName', (vram * 1024) + '-' + cpu );
+
+			}		
+
+			if (e.target.id == 'vramoffering' && (  this.get('model.interoutevdcConfig.ram') >= 1 && this.get('model.interoutevdcConfig.ram') < 1024 )  ) {
+				 this.set('model.interoutevdcConfig.ram', Number(e.target.value));
+				 var cpu = this.get('model.interoutevdcConfig.cpu');
+                                var vram = this.get('model.interoutevdcConfig.ram');
+                                this.set('model.interoutevdcConfig.serviceOfferingName', (vram * 1024) + '-' + cpu );
+
+			}
+	
+			if (this.get('model.interoutevdcConfig.cpu') <= 0) {
+				this.set('model.interoutevdcConfig.cpu', 1);
+				$('#cpuoffering').val('1');
+			}
+
+			if (this.get('model.interoutevdcConfig.cpu') > 16) {
+                                this.set('model.interoutevdcConfig.cpu', 16);
+				$('#cpuoffering').val('16')
+                        }
+
+			// max min vRAM
+			if (this.get('model.interoutevdcConfig.ram') <= 0) {
+                                this.set('model.interoutevdcConfig.ram', 1);
+				$('#vramoffering').val('1');
+                        }
+
+                        if (this.get('model.interoutevdcConfig.ram') > 1024) {
+                           this.set('model.interoutevdcConfig.ram', 1024);
+				$('#vramoffering').val('1024')
+			}
+
+                    },
+
+
+                    lessCPU: function(e){
+			if ( this.get('model.interoutevdcConfig.cpu') > 1  ) {
+				var cpu = this.get('model.interoutevdcConfig.cpu') - 1;
+				var vram = this.get('model.interoutevdcConfig.ram');
+				this.set('model.interoutevdcConfig.cpu', cpu  ); 
+				this.set('model.interoutevdcConfig.serviceOfferingName', (vram * 1024) + '-' + cpu );
+			}		
+                    },
+
+                    moreCPU: function(e){
+			if ( this.get('model.interoutevdcConfig.cpu') < 16  ) {
+                                var cpu = this.get('model.interoutevdcConfig.cpu') + 1;
+				var vram = this.get('model.interoutevdcConfig.ram');
+				this.set('model.interoutevdcConfig.cpu', cpu );
+                      		this.set('model.interoutevdcConfig.serviceOfferingName', (vram * 1024) + '-' + cpu );
+			 }
+                    },
+
+		    lessVRAM: function(e){
+			if ( this.get('model.interoutevdcConfig.ram') > 1  ) {
+                                var vram = this.get('model.interoutevdcConfig.ram') / 2;
+				this.set('model.interoutevdcConfig.ram', vram );
+                                this.set('model.interoutevdcConfig.serviceOfferingName', (vram * 1024) + '-' + this.get('model.interoutevdcConfig.cpu') );
+                        }
+               	    },
+
+               	    moreVRAM: function(e){
+			if ( this.get('model.interoutevdcConfig.ram') < 64  ) {
+                                var vram = this.get('model.interoutevdcConfig.ram') * 2;
+				this.set('model.interoutevdcConfig.ram', vram );
+                                this.set('model.interoutevdcConfig.serviceOfferingName', (vram * 1024) + '-' + this.get('model.interoutevdcConfig.cpu') );
+                         }
+                    },
+
 		    setInstance: function() {
 			this.set('step', 14);
 			this.set('step', 15);
 	  	    }
 		},
-
+		
 		apiRequest: function(command, params) {
 		    let url		= this.get('app.proxyEndpoint') + '/' + this.get('model.interoutevdcConfig.apiurl');
 		    params		= params || {};
@@ -228,7 +406,7 @@ define('ui/components/machine/driver-interoutevdc/component', ['exports', 'ember
 		isStep5: Ember.computed.equal('step', 5),
 		isStep6: Ember.computed.equal('step', 6),
 		isStep7: Ember.computed.equal('step', 7),
-                isStep8: Ember.computed.equal('step', 8),
+		isStep8: Ember.computed.equal('step', 8),
                 isStep9: Ember.computed.equal('step', 9),
                 isStep10: Ember.computed.equal('step', 10),
                 isStep11: Ember.computed.equal('step', 11),
@@ -245,6 +423,18 @@ define('ui/components/machine/driver-interoutevdc/component', ['exports', 'ember
 		isGteStep15: Ember.computed.gte('step', 15),
 	});
 });
+;
+
+//var ember = require('../bower_components/ember/ember.js');
+//var Ember = require('../../ember');
+//var ComponentExtended = require('ui/components/new-select/component');
+
+// extend component test
+//export default ComponentExtended.extend({
+  
+//});
+
+
 ;
 define("ui/components/machine/driver-interoutevdc/template",["exports","ember","ui/mixins/driver"],function(exports,_ember,_uiMixinsDriver){
 
@@ -823,11 +1013,11 @@ exports["default"] = Ember.HTMLBars.template((function() {
         "loc": {
           "source": null,
           "start": {
-            "line": 187,
+            "line": 205,
             "column": 8
           },
           "end": {
-            "line": 191,
+            "line": 209,
             "column": 8
           }
         }
@@ -846,7 +1036,7 @@ exports["default"] = Ember.HTMLBars.template((function() {
         dom.appendChild(el0, el1);
         var el1 = dom.createElement("div");
         dom.setAttribute(el1,"class","footer-actions");
-        var el2 = dom.createTextNode("\n                ");
+        var el2 = dom.createTextNode("\n               ");
         dom.appendChild(el1, el2);
         var el2 = dom.createElement("button");
         dom.setAttribute(el2,"class","btn btn-primary");
@@ -878,9 +1068,9 @@ exports["default"] = Ember.HTMLBars.template((function() {
         return morphs;
       },
       statements: [
-        ["inline","top-errors",[],["errors",["subexpr","@mut",[["get","errors",["loc",[null,[187,45],[187,51]]],0,0,0,0]],[],[],0,0]],["loc",[null,[187,25],[187,53]]],0,0],
-        ["element","action",["selectServiceOffering"],[],["loc",[null,[189,24],[189,58]]],0,0],
-        ["element","action",["cancel"],[],["loc",[null,[189,109],[189,128]]],0,0]
+        ["inline","top-errors",[],["errors",["subexpr","@mut",[["get","errors",["loc",[null,[205,45],[205,51]]],0,0,0,0]],[],[],0,0]],["loc",[null,[205,25],[205,53]]],0,0],
+        ["element","action",["getServiceOfferingId"],[],["loc",[null,[207,23],[207,56]]],0,0],
+        ["element","action",["cancel"],[],["loc",[null,[207,107],[207,126]]],0,0]
       ],
       locals: [],
       templates: []
@@ -893,11 +1083,11 @@ exports["default"] = Ember.HTMLBars.template((function() {
         "loc": {
           "source": null,
           "start": {
-            "line": 217,
+            "line": 236,
             "column": 8
           },
           "end": {
-            "line": 221,
+            "line": 240,
             "column": 8
           }
         }
@@ -948,9 +1138,9 @@ exports["default"] = Ember.HTMLBars.template((function() {
         return morphs;
       },
       statements: [
-        ["inline","top-errors",[],["errors",["subexpr","@mut",[["get","errors",["loc",[null,[217,45],[217,51]]],0,0,0,0]],[],[],0,0]],["loc",[null,[217,25],[217,53]]],0,0],
-        ["element","action",["setInstance"],[],["loc",[null,[219,24],[219,48]]],0,0],
-        ["element","action",["cancel"],[],["loc",[null,[219,99],[219,118]]],0,0]
+        ["inline","top-errors",[],["errors",["subexpr","@mut",[["get","errors",["loc",[null,[236,45],[236,51]]],0,0,0,0]],[],[],0,0]],["loc",[null,[236,25],[236,53]]],0,0],
+        ["element","action",["setInstance"],[],["loc",[null,[238,24],[238,48]]],0,0],
+        ["element","action",["cancel"],[],["loc",[null,[238,99],[238,118]]],0,0]
       ],
       locals: [],
       templates: []
@@ -966,7 +1156,7 @@ exports["default"] = Ember.HTMLBars.template((function() {
           "column": 0
         },
         "end": {
-          "line": 241,
+          "line": 263,
           "column": 0
         }
       }
@@ -1143,7 +1333,7 @@ exports["default"] = Ember.HTMLBars.template((function() {
       var el3 = dom.createTextNode("\n		");
       dom.appendChild(el2, el3);
       var el3 = dom.createElement("div");
-      dom.setAttribute(el3,"class","over-hr r-mt20 r-mb20");
+      dom.setAttribute(el3,"class","over-hr r-mt20 r-mb20 test-1 test-1-test");
       var el4 = dom.createTextNode("\n			");
       dom.appendChild(el3, el4);
       var el4 = dom.createElement("span");
@@ -1173,7 +1363,7 @@ exports["default"] = Ember.HTMLBars.template((function() {
       var el4 = dom.createTextNode("\n       			");
       dom.appendChild(el3, el4);
       var el4 = dom.createElement("div");
-      dom.setAttribute(el4,"class","col-sm-12 col-md-8");
+      dom.setAttribute(el4,"class","col-sm-12 col-md-8 test-2");
       var el5 = dom.createTextNode("\n        		  ");
       dom.appendChild(el4, el5);
       var el5 = dom.createComment("");
@@ -1352,7 +1542,7 @@ exports["default"] = Ember.HTMLBars.template((function() {
       dom.appendChild(el3, el4);
       var el4 = dom.createElement("div");
       dom.setAttribute(el4,"class","col-sm-12 col-md-8");
-      var el5 = dom.createTextNode("\n                          ");
+      var el5 = dom.createTextNode("\n                         ");
       dom.appendChild(el4, el5);
       var el5 = dom.createComment("");
       dom.appendChild(el4, el5);
@@ -1520,24 +1710,110 @@ exports["default"] = Ember.HTMLBars.template((function() {
       dom.appendChild(el4, el5);
       var el5 = dom.createElement("label");
       dom.setAttribute(el5,"class","form-control-static");
-      var el6 = dom.createTextNode("ServiceOffering");
+      var el6 = dom.createTextNode("CPU");
       dom.appendChild(el5, el6);
       dom.appendChild(el4, el5);
       var el5 = dom.createTextNode("\n                        ");
       dom.appendChild(el4, el5);
       dom.appendChild(el3, el4);
-      var el4 = dom.createTextNode("\n                        ");
+      var el4 = dom.createTextNode("\n		\n			");
       dom.appendChild(el3, el4);
       var el4 = dom.createElement("div");
-      dom.setAttribute(el4,"class","col-sm-12 col-md-8");
-      var el5 = dom.createTextNode("\n                          ");
+      dom.setAttribute(el4,"class","col-sml-12 col-md-10");
+      var el5 = dom.createTextNode("\n				");
       dom.appendChild(el4, el5);
-      var el5 = dom.createComment("");
+      var el5 = dom.createElement("button");
+      dom.setAttribute(el5,"class","btn btn-primary btn-square cpu minus");
+      var el6 = dom.createTextNode(" - ");
+      dom.appendChild(el5, el6);
+      dom.appendChild(el4, el5);
+      var el5 = dom.createTextNode(" \n				");
+      dom.appendChild(el4, el5);
+      var el5 = dom.createElement("input");
+      dom.setAttribute(el5,"id","cpuoffering");
+      dom.setAttribute(el5,"maxlength","2");
+      dom.setAttribute(el5,"type","text");
+      dom.setAttribute(el5,"class","form-control");
+      dom.appendChild(el4, el5);
+      var el5 = dom.createTextNode("\n				");
+      dom.appendChild(el4, el5);
+      var el5 = dom.createElement("span");
+      dom.setAttribute(el5,"class","cpu-label");
+      var el6 = dom.createTextNode("vCPU");
+      dom.appendChild(el5, el6);
+      dom.appendChild(el4, el5);
+      var el5 = dom.createTextNode("\n				");
+      dom.appendChild(el4, el5);
+      var el5 = dom.createElement("button");
+      dom.setAttribute(el5,"class","btn btn-primary btn-square cpu plus");
+      var el6 = dom.createTextNode(" + ");
+      dom.appendChild(el5, el6);
+      dom.appendChild(el4, el5);
+      var el5 = dom.createTextNode("\n			");
+      dom.appendChild(el4, el5);
+      dom.appendChild(el3, el4);
+      var el4 = dom.createTextNode("\n			");
+      dom.appendChild(el3, el4);
+      var el4 = dom.createElement("div");
+      dom.setAttribute(el4,"class","clearfix");
+      dom.appendChild(el3, el4);
+      var el4 = dom.createElement("br");
+      dom.appendChild(el3, el4);
+      var el4 = dom.createTextNode("\n\n\n			");
+      dom.appendChild(el3, el4);
+      var el4 = dom.createElement("div");
+      dom.setAttribute(el4,"class","col-sm-12 col-md-2 form-label");
+      var el5 = dom.createTextNode("\n                                ");
+      dom.appendChild(el4, el5);
+      var el5 = dom.createElement("label");
+      dom.setAttribute(el5,"class","form-control-static");
+      var el6 = dom.createTextNode("VRAM");
+      dom.appendChild(el5, el6);
       dom.appendChild(el4, el5);
       var el5 = dom.createTextNode("\n                        ");
       dom.appendChild(el4, el5);
       dom.appendChild(el3, el4);
-      var el4 = dom.createTextNode("\n                ");
+      var el4 = dom.createTextNode("\n	                ");
+      dom.appendChild(el3, el4);
+      var el4 = dom.createElement("div");
+      dom.setAttribute(el4,"class","col-sml-12 col-md-10");
+      var el5 = dom.createTextNode(" \n                                ");
+      dom.appendChild(el4, el5);
+      var el5 = dom.createElement("button");
+      dom.setAttribute(el5,"class","btn btn-primary btn-square vram minus");
+      var el6 = dom.createTextNode(" - ");
+      dom.appendChild(el5, el6);
+      dom.appendChild(el4, el5);
+      var el5 = dom.createTextNode("\n				");
+      dom.appendChild(el4, el5);
+      var el5 = dom.createElement("input");
+      dom.setAttribute(el5,"id","vramoffering");
+      dom.setAttribute(el5,"maxlength","4");
+      dom.setAttribute(el5,"type","text");
+      dom.setAttribute(el5,"class","form-control");
+      dom.appendChild(el4, el5);
+      var el5 = dom.createTextNode("\n                            	");
+      dom.appendChild(el4, el5);
+      var el5 = dom.createElement("span");
+      dom.setAttribute(el5,"class","vram-label");
+      var el6 = dom.createTextNode("GB");
+      dom.appendChild(el5, el6);
+      dom.appendChild(el4, el5);
+      var el5 = dom.createTextNode("\n			  ");
+      dom.appendChild(el4, el5);
+      var el5 = dom.createElement("button");
+      dom.setAttribute(el5,"class","btn btn-primary btn-square vram plus");
+      var el6 = dom.createTextNode(" + ");
+      dom.appendChild(el5, el6);
+      dom.appendChild(el4, el5);
+      var el5 = dom.createTextNode("\n                        	");
+      dom.appendChild(el4, el5);
+      var el5 = dom.createComment(" <label>{{model.interoutevdcConfig.ram}} vRAM</label>");
+      dom.appendChild(el4, el5);
+      var el5 = dom.createTextNode("\n			");
+      dom.appendChild(el4, el5);
+      dom.appendChild(el3, el4);
+      var el4 = dom.createTextNode("\n\n                ");
       dom.appendChild(el3, el4);
       dom.appendChild(el2, el3);
       var el3 = dom.createTextNode("\n        ");
@@ -1598,7 +1874,7 @@ exports["default"] = Ember.HTMLBars.template((function() {
       var el4 = dom.createTextNode("\n                ");
       dom.appendChild(el3, el4);
       dom.appendChild(el2, el3);
-      var el3 = dom.createTextNode("\n                ");
+      var el3 = dom.createTextNode("\n\n                ");
       dom.appendChild(el2, el3);
       var el3 = dom.createElement("div");
       var el4 = dom.createTextNode("\n                        ");
@@ -1609,7 +1885,7 @@ exports["default"] = Ember.HTMLBars.template((function() {
       dom.appendChild(el4, el5);
       var el5 = dom.createElement("label");
       dom.setAttribute(el5,"class","form-control-static");
-      var el6 = dom.createTextNode("ServiceOffering");
+      var el6 = dom.createTextNode("Disc Type / Disk Size (GB)");
       dom.appendChild(el5, el6);
       dom.appendChild(el4, el5);
       var el5 = dom.createTextNode("\n                        ");
@@ -1619,7 +1895,7 @@ exports["default"] = Ember.HTMLBars.template((function() {
       dom.appendChild(el3, el4);
       var el4 = dom.createElement("div");
       dom.setAttribute(el4,"class","col-sm-12 col-md-8");
-      var el5 = dom.createTextNode("\n                          ");
+      var el5 = dom.createTextNode("\n	                  ");
       dom.appendChild(el4, el5);
       var el5 = dom.createComment("");
       dom.appendChild(el4, el5);
@@ -1713,7 +1989,7 @@ exports["default"] = Ember.HTMLBars.template((function() {
       var el2 = dom.createTextNode("\n");
       dom.appendChild(el1, el2);
       dom.appendChild(el0, el1);
-      var el1 = dom.createTextNode("\n");
+      var el1 = dom.createTextNode("\n\n\n\n");
       dom.appendChild(el0, el1);
       return el0;
     },
@@ -1738,14 +2014,22 @@ exports["default"] = Ember.HTMLBars.template((function() {
       var element38 = dom.childAt(fragment, [36]);
       var element39 = dom.childAt(fragment, [40]);
       var element40 = dom.childAt(element39, [1, 3]);
-      var element41 = dom.childAt(fragment, [44]);
-      var element42 = dom.childAt(fragment, [48]);
-      var element43 = dom.childAt(element42, [1, 3]);
-      var element44 = dom.childAt(element43, [3]);
-      var element45 = dom.childAt(fragment, [52]);
-      var element46 = dom.childAt(fragment, [56]);
-      var element47 = dom.childAt(element46, [1]);
-      var morphs = new Array(44);
+      var element41 = dom.childAt(element40, [3]);
+      var element42 = dom.childAt(element41, [1]);
+      var element43 = dom.childAt(element41, [3]);
+      var element44 = dom.childAt(element41, [7]);
+      var element45 = dom.childAt(element40, [10]);
+      var element46 = dom.childAt(element45, [1]);
+      var element47 = dom.childAt(element45, [3]);
+      var element48 = dom.childAt(element45, [7]);
+      var element49 = dom.childAt(fragment, [44]);
+      var element50 = dom.childAt(fragment, [48]);
+      var element51 = dom.childAt(element50, [1, 3]);
+      var element52 = dom.childAt(element51, [3]);
+      var element53 = dom.childAt(fragment, [52]);
+      var element54 = dom.childAt(fragment, [56]);
+      var element55 = dom.childAt(element54, [1]);
+      var morphs = new Array(51);
       morphs[0] = dom.createAttrMorph(element23, 'class');
       morphs[1] = dom.createMorphAt(dom.childAt(element23, [3]),1,1);
       morphs[2] = dom.createAttrMorph(element24, 'class');
@@ -1776,20 +2060,27 @@ exports["default"] = Ember.HTMLBars.template((function() {
       morphs[27] = dom.createAttrMorph(element38, 'class');
       morphs[28] = dom.createAttrMorph(element39, 'class');
       morphs[29] = dom.createAttrMorph(element40, 'class');
-      morphs[30] = dom.createMorphAt(dom.childAt(element40, [3]),1,1);
-      morphs[31] = dom.createMorphAt(element39,3,3);
-      morphs[32] = dom.createAttrMorph(element41, 'class');
-      morphs[33] = dom.createAttrMorph(element42, 'class');
-      morphs[34] = dom.createAttrMorph(element43, 'class');
-      morphs[35] = dom.createMorphAt(element44,1,1);
-      morphs[36] = dom.createMorphAt(element44,3,3);
-      morphs[37] = dom.createMorphAt(element42,3,3);
-      morphs[38] = dom.createAttrMorph(element45, 'class');
-      morphs[39] = dom.createAttrMorph(element46, 'class');
-      morphs[40] = dom.createMorphAt(element47,3,3);
-      morphs[41] = dom.createMorphAt(element47,5,5);
-      morphs[42] = dom.createMorphAt(element46,3,3);
-      morphs[43] = dom.createMorphAt(element46,5,5);
+      morphs[30] = dom.createElementMorph(element42);
+      morphs[31] = dom.createAttrMorph(element43, 'onchange');
+      morphs[32] = dom.createAttrMorph(element43, 'value');
+      morphs[33] = dom.createElementMorph(element44);
+      morphs[34] = dom.createElementMorph(element46);
+      morphs[35] = dom.createAttrMorph(element47, 'onchange');
+      morphs[36] = dom.createAttrMorph(element47, 'value');
+      morphs[37] = dom.createElementMorph(element48);
+      morphs[38] = dom.createMorphAt(element39,3,3);
+      morphs[39] = dom.createAttrMorph(element49, 'class');
+      morphs[40] = dom.createAttrMorph(element50, 'class');
+      morphs[41] = dom.createAttrMorph(element51, 'class');
+      morphs[42] = dom.createMorphAt(element52,1,1);
+      morphs[43] = dom.createMorphAt(element52,3,3);
+      morphs[44] = dom.createMorphAt(element50,3,3);
+      morphs[45] = dom.createAttrMorph(element53, 'class');
+      morphs[46] = dom.createAttrMorph(element54, 'class');
+      morphs[47] = dom.createMorphAt(element55,3,3);
+      morphs[48] = dom.createMorphAt(element55,5,5);
+      morphs[49] = dom.createMorphAt(element54,3,3);
+      morphs[50] = dom.createMorphAt(element54,5,5);
       return morphs;
     },
     statements: [
@@ -1800,43 +2091,50 @@ exports["default"] = Ember.HTMLBars.template((function() {
       ["attribute","class",["concat",["row ",["subexpr","if",[["get","isStep1",["loc",[null,[31,45],[31,52]]],0,0,0,0],"form-group"],[],["loc",[null,[31,40],[31,67]]],0,0]],0,0,0,0,0],0,0,0,0],
       ["block","if",[["get","isStep1",["loc",[null,[36,11],[36,18]]],0,0,0,0]],[],4,null,["loc",[null,[36,5],[37,47]]]],
       ["block","if",[["get","isStep1",["loc",[null,[42,7],[42,14]]],0,0,0,0]],[],5,null,["loc",[null,[42,1],[46,8]]]],
-      ["attribute","class",["concat",["horizontal-form r-pt0 ",["subexpr","unless",[["get","isStep2",["loc",[null,[50,47],[50,54]]],0,0,0,0],"hide"],[],["loc",[null,[50,38],[50,63]]],0,0]],0,0,0,0,0],0,0,0,0],
-      ["attribute","class",["concat",["horizontal-form r-pt0 ",["subexpr","unless",[["get","isGteStep3",["loc",[null,[57,47],[57,57]]],0,0,0,0],"hide"],[],["loc",[null,[57,38],[57,66]]],0,0]],0,0,0,0,0],0,0,0,0],
+      ["attribute","class",["concat",["horizontal-form r-pt0 step2 ",["subexpr","unless",[["get","isStep2",["loc",[null,[50,53],[50,60]]],0,0,0,0],"hide"],[],["loc",[null,[50,44],[50,69]]],0,0]],0,0,0,0,0],0,0,0,0],
+      ["attribute","class",["concat",["horizontal-form r-pt0 step3 ",["subexpr","unless",[["get","isGteStep3",["loc",[null,[57,53],[57,63]]],0,0,0,0],"hide"],[],["loc",[null,[57,44],[57,72]]],0,0]],0,0,0,0,0],0,0,0,0],
       ["attribute","class",["concat",["row ",["subexpr","if",[["get","isStep3",["loc",[null,[62,23],[62,30]]],0,0,0,0],"form-group"],[],["loc",[null,[62,18],[62,45]]],0,0]],0,0,0,0,0],0,0,0,0],
-      ["inline","new-select",[],["classNames","form-control","content",["subexpr","@mut",[["get","avzones",["loc",[null,[67,59],[67,66]]],0,0,0,0]],[],[],0,0],"prompt","Please select a zone","optionLabelPath","name","optionValuePath","id","value",["subexpr","@mut",[["get","model.interoutevdcConfig.zoneid",["loc",[null,[67,147],[67,178]]],0,0,0,0]],[],[],0,0]],["loc",[null,[67,12],[67,180]]],0,0],
+      ["inline","new-select",[],["classNames","form-control","action",["subexpr","action",[["get","resetSiblingMenus",["loc",[null,[67,66],[67,83]]],0,0,0,0]],[],["loc",[null,[67,58],[67,84]]],0,0],"content",["subexpr","@mut",[["get","avzones",["loc",[null,[67,93],[67,100]]],0,0,0,0]],[],[],0,0],"prompt","Please select a zone","optionLabelPath","name","optionValuePath","id","value",["subexpr","@mut",[["get","model.interoutevdcConfig.zoneid",["loc",[null,[67,181],[67,212]]],0,0,0,0]],[],[],0,0]],["loc",[null,[67,12],[67,214]]],0,0],
       ["block","if",[["get","isStep3",["loc",[null,[71,7],[71,14]]],0,0,0,0]],[],6,null,["loc",[null,[71,1],[75,8]]]],
-      ["attribute","class",["concat",["horizontal-form r-pt0 ",["subexpr","unless",[["get","isStep4",["loc",[null,[79,47],[79,54]]],0,0,0,0],"hide"],[],["loc",[null,[79,38],[79,63]]],0,0]],0,0,0,0,0],0,0,0,0],
-      ["attribute","class",["concat",["horizontal-form r-pt0 ",["subexpr","unless",[["get","isGteStep5",["loc",[null,[86,47],[86,57]]],0,0,0,0],"hide"],[],["loc",[null,[86,38],[86,66]]],0,0]],0,0,0,0,0],0,0,0,0],
+      ["attribute","class",["concat",["horizontal-form r-pt0 step4 ",["subexpr","unless",[["get","isStep4",["loc",[null,[79,53],[79,60]]],0,0,0,0],"hide"],[],["loc",[null,[79,44],[79,69]]],0,0]],0,0,0,0,0],0,0,0,0],
+      ["attribute","class",["concat",["horizontal-form r-pt0 step5 ",["subexpr","unless",[["get","isGteStep5",["loc",[null,[86,53],[86,63]]],0,0,0,0],"hide"],[],["loc",[null,[86,44],[86,72]]],0,0]],0,0,0,0,0],0,0,0,0],
       ["attribute","class",["concat",["row ",["subexpr","if",[["get","isStep5",["loc",[null,[91,37],[91,44]]],0,0,0,0],"form-group"],[],["loc",[null,[91,32],[91,59]]],0,0]],0,0,0,0,0],0,0,0,0],
-      ["inline","new-select",[],["classNames","form-control","content",["subexpr","@mut",[["get","avnetworks",["loc",[null,[96,73],[96,83]]],0,0,0,0]],[],[],0,0],"prompt","Please select a network","optionLabelPath","name","optionValuePath","id","value",["subexpr","@mut",[["get","model.interoutevdcConfig.networkid",["loc",[null,[96,167],[96,201]]],0,0,0,0]],[],[],0,0]],["loc",[null,[96,26],[96,204]]],0,0],
+      ["inline","new-select",[],["action",["subexpr","action",[["get","resetSiblingMenus",["loc",[null,[96,54],[96,71]]],0,0,0,0]],[],["loc",[null,[96,46],[96,72]]],0,0],"classNames","form-control","content",["subexpr","@mut",[["get","avnetworks",["loc",[null,[96,107],[96,117]]],0,0,0,0]],[],[],0,0],"prompt","Please select a network","optionLabelPath","name","optionValuePath","id","value",["subexpr","@mut",[["get","model.interoutevdcConfig.networkid",["loc",[null,[96,201],[96,235]]],0,0,0,0]],[],[],0,0]],["loc",[null,[96,26],[96,238]]],0,0],
       ["block","if",[["get","isStep5",["loc",[null,[100,14],[100,21]]],0,0,0,0]],[],7,null,["loc",[null,[100,8],[104,15]]]],
-      ["attribute","class",["concat",["horizontal-form r-pt0 ",["subexpr","unless",[["get","isStep6",["loc",[null,[108,47],[108,54]]],0,0,0,0],"hide"],[],["loc",[null,[108,38],[108,63]]],0,0]],0,0,0,0,0],0,0,0,0],
-      ["attribute","class",["concat",["horizontal-form r-pt0 ",["subexpr","unless",[["get","isGteStep7",["loc",[null,[115,47],[115,57]]],0,0,0,0],"hide"],[],["loc",[null,[115,38],[115,66]]],0,0]],0,0,0,0,0],0,0,0,0],
+      ["attribute","class",["concat",["horizontal-form r-pt0 step6 ",["subexpr","unless",[["get","isStep6",["loc",[null,[108,53],[108,60]]],0,0,0,0],"hide"],[],["loc",[null,[108,44],[108,69]]],0,0]],0,0,0,0,0],0,0,0,0],
+      ["attribute","class",["concat",["horizontal-form r-pt0 step7 ",["subexpr","unless",[["get","isGteStep7",["loc",[null,[115,53],[115,63]]],0,0,0,0],"hide"],[],["loc",[null,[115,44],[115,72]]],0,0]],0,0,0,0,0],0,0,0,0],
       ["attribute","class",["concat",["row ",["subexpr","if",[["get","isStep7",["loc",[null,[120,37],[120,44]]],0,0,0,0],"form-group"],[],["loc",[null,[120,32],[120,59]]],0,0]],0,0,0,0,0],0,0,0,0],
-      ["inline","new-select",[],["classNames","form-control","content",["subexpr","@mut",[["get","avtemplatestype",["loc",[null,[125,73],[125,88]]],0,0,0,0]],[],[],0,0],"prompt","Please select a template type","optionLabelPath","name","optionValuePath","id","value",["subexpr","@mut",[["get","model.interoutevdcConfig.templatefilter",["loc",[null,[125,178],[125,217]]],0,0,0,0]],[],[],0,0]],["loc",[null,[125,26],[125,220]]],0,0],
+      ["inline","new-select",[],["action",["subexpr","action",[["get","resetSiblingMenus",["loc",[null,[125,53],[125,70]]],0,0,0,0]],[],["loc",[null,[125,45],[125,71]]],0,0],"classNames","form-control","content",["subexpr","@mut",[["get","avtemplatestype",["loc",[null,[125,106],[125,121]]],0,0,0,0]],[],[],0,0],"prompt","Please select a template type","optionLabelPath","name","optionValuePath","id","value",["subexpr","@mut",[["get","model.interoutevdcConfig.templatefilter",["loc",[null,[125,211],[125,250]]],0,0,0,0]],[],[],0,0]],["loc",[null,[125,25],[125,253]]],0,0],
       ["block","if",[["get","isStep7",["loc",[null,[129,14],[129,21]]],0,0,0,0]],[],8,null,["loc",[null,[129,8],[133,15]]]],
-      ["attribute","class",["concat",["horizontal-form r-pt0 ",["subexpr","unless",[["get","isStep8",["loc",[null,[137,47],[137,54]]],0,0,0,0],"hide"],[],["loc",[null,[137,38],[137,63]]],0,0]],0,0,0,0,0],0,0,0,0],
-      ["attribute","class",["concat",["horizontal-form r-pt0 ",["subexpr","unless",[["get","isGteStep9",["loc",[null,[144,47],[144,57]]],0,0,0,0],"hide"],[],["loc",[null,[144,38],[144,66]]],0,0]],0,0,0,0,0],0,0,0,0],
+      ["attribute","class",["concat",["horizontal-form r-pt0 step8 ",["subexpr","unless",[["get","isStep8",["loc",[null,[137,53],[137,60]]],0,0,0,0],"hide"],[],["loc",[null,[137,44],[137,69]]],0,0]],0,0,0,0,0],0,0,0,0],
+      ["attribute","class",["concat",["horizontal-form r-pt0 step9 ",["subexpr","unless",[["get","isGteStep9",["loc",[null,[144,53],[144,63]]],0,0,0,0],"hide"],[],["loc",[null,[144,44],[144,72]]],0,0]],0,0,0,0,0],0,0,0,0],
       ["attribute","class",["concat",["row ",["subexpr","if",[["get","isStep9",["loc",[null,[149,37],[149,44]]],0,0,0,0],"form-group"],[],["loc",[null,[149,32],[149,59]]],0,0]],0,0,0,0,0],0,0,0,0],
-      ["inline","new-select",[],["classNames","form-control","content",["subexpr","@mut",[["get","avtemplates",["loc",[null,[154,73],[154,84]]],0,0,0,0]],[],[],0,0],"prompt","Please select a template","optionLabelPath","name","optionValuePath","id","value",["subexpr","@mut",[["get","model.interoutevdcConfig.templateid",["loc",[null,[154,169],[154,204]]],0,0,0,0]],[],[],0,0]],["loc",[null,[154,26],[154,207]]],0,0],
+      ["inline","new-select",[],["action",["subexpr","action",[["get","resetSiblingMenus",["loc",[null,[154,54],[154,71]]],0,0,0,0]],[],["loc",[null,[154,46],[154,72]]],0,0],"classNames","form-control","content",["subexpr","@mut",[["get","avtemplates",["loc",[null,[154,107],[154,118]]],0,0,0,0]],[],[],0,0],"prompt","Please select a template","optionLabelPath","name","optionValuePath","id","value",["subexpr","@mut",[["get","model.interoutevdcConfig.templateid",["loc",[null,[154,203],[154,238]]],0,0,0,0]],[],[],0,0]],["loc",[null,[154,26],[154,241]]],0,0],
       ["block","if",[["get","isStep9",["loc",[null,[158,14],[158,21]]],0,0,0,0]],[],9,null,["loc",[null,[158,8],[162,15]]]],
-      ["attribute","class",["concat",["horizontal-form r-pt0 ",["subexpr","unless",[["get","isStep10",["loc",[null,[166,47],[166,55]]],0,0,0,0],"hide"],[],["loc",[null,[166,38],[166,64]]],0,0]],0,0,0,0,0],0,0,0,0],
-      ["attribute","class",["concat",["horizontal-form r-pt0 ",["subexpr","unless",[["get","isGteStep11",["loc",[null,[173,47],[173,58]]],0,0,0,0],"hide"],[],["loc",[null,[173,38],[173,67]]],0,0]],0,0,0,0,0],0,0,0,0],
+      ["attribute","class",["concat",["horizontal-form r-pt0 step10 ",["subexpr","unless",[["get","isStep10",["loc",[null,[166,54],[166,62]]],0,0,0,0],"hide"],[],["loc",[null,[166,45],[166,71]]],0,0]],0,0,0,0,0],0,0,0,0],
+      ["attribute","class",["concat",["horizontal-form r-pt0 step11 ",["subexpr","unless",[["get","isGteStep11",["loc",[null,[173,54],[173,65]]],0,0,0,0],"hide"],[],["loc",[null,[173,45],[173,74]]],0,0]],0,0,0,0,0],0,0,0,0],
       ["attribute","class",["concat",["row ",["subexpr","if",[["get","isStep11",["loc",[null,[178,37],[178,45]]],0,0,0,0],"form-group"],[],["loc",[null,[178,32],[178,60]]],0,0]],0,0,0,0,0],0,0,0,0],
-      ["inline","new-select",[],["classNames","form-control","content",["subexpr","@mut",[["get","avservofferings",["loc",[null,[183,73],[183,88]]],0,0,0,0]],[],[],0,0],"prompt","Please select a service offering (format: RAM-CPU)","optionLabelPath","name","optionValuePath","id","value",["subexpr","@mut",[["get","model.interoutevdcConfig.serviceofferingid",["loc",[null,[183,200],[183,242]]],0,0,0,0]],[],[],0,0]],["loc",[null,[183,26],[183,245]]],0,0],
-      ["block","if",[["get","isStep11",["loc",[null,[187,14],[187,22]]],0,0,0,0]],[],10,null,["loc",[null,[187,8],[191,15]]]],
-      ["attribute","class",["concat",["horizontal-form r-pt0 ",["subexpr","unless",[["get","isStep12",["loc",[null,[195,47],[195,55]]],0,0,0,0],"hide"],[],["loc",[null,[195,38],[195,64]]],0,0]],0,0,0,0,0],0,0,0,0],
-      ["attribute","class",["concat",["horizontal-form r-pt0 ",["subexpr","unless",[["get","isGteStep13",["loc",[null,[202,47],[202,58]]],0,0,0,0],"hide"],[],["loc",[null,[202,38],[202,67]]],0,0]],0,0,0,0,0],0,0,0,0],
-      ["attribute","class",["concat",["row ",["subexpr","if",[["get","isStep13",["loc",[null,[207,37],[207,45]]],0,0,0,0],"form-group"],[],["loc",[null,[207,32],[207,60]]],0,0]],0,0,0,0,0],0,0,0,0],
-      ["inline","new-select",[],["classNames","form-control","content",["subexpr","@mut",[["get","avdiskofferings",["loc",[null,[212,73],[212,88]]],0,0,0,0]],[],[],0,0],"prompt","Please select a disk offering (extra/DATA disk)","optionLabelPath","name","optionValuePath","id","value",["subexpr","@mut",[["get","model.interoutevdcConfig.diskofferingid",["loc",[null,[212,197],[212,236]]],0,0,0,0]],[],[],0,0]],["loc",[null,[212,26],[212,239]]],0,0],
-      ["inline","input",[],["type","text","value",["subexpr","@mut",[["get","model.interoutevdcConfig.disksize",["loc",[null,[213,31],[213,64]]],0,0,0,0]],[],[],0,0],"classNames","form-control","placeholder","Disk size (GB)"],["loc",[null,[213,5],[213,121]]],0,0],
-      ["block","if",[["get","isStep13",["loc",[null,[217,14],[217,22]]],0,0,0,0]],[],11,null,["loc",[null,[217,8],[221,15]]]],
-      ["attribute","class",["concat",["horizontal-form r-pt0 ",["subexpr","unless",[["get","isStep14",["loc",[null,[225,47],[225,55]]],0,0,0,0],"hide"],[],["loc",[null,[225,38],[225,64]]],0,0]],0,0,0,0,0],0,0,0,0],
-      ["attribute","class",["concat",["horizontal-form r-pt0 ",["subexpr","unless",[["get","isGteStep15",["loc",[null,[232,47],[232,58]]],0,0,0,0],"hide"],[],["loc",[null,[232,38],[232,67]]],0,0]],0,0,0,0,0],0,0,0,0],
-      ["inline","partial",["host/add-common"],[],["loc",[null,[237,2],[237,31]]],0,0],
-      ["inline","partial",["host/add-options"],[],["loc",[null,[237,32],[237,62]]],0,0],
-      ["inline","top-errors",[],["errors",["subexpr","@mut",[["get","errors",["loc",[null,[239,21],[239,27]]],0,0,0,0]],[],[],0,0]],["loc",[null,[239,1],[239,29]]],0,0],
-      ["inline","save-cancel",[],["save","save","cancel","cancel"],["loc",[null,[239,30],[239,73]]],0,0]
+      ["element","action",["lessCPU"],[],["loc",[null,[184,12],[184,32]]],0,0],
+      ["attribute","onchange",["subexpr","action",["setRAMCPUOffering"],[],["loc",[null,[null,null],[185,81]]],0,0],0,0,0,0],
+      ["attribute","value",["get","model.interoutevdcConfig.cpu",["loc",[null,[185,124],[185,152]]],0,0,0,0],0,0,0,0],
+      ["element","action",["moreCPU"],[],["loc",[null,[187,12],[187,32]]],0,0],
+      ["element","action",["lessVRAM"],[],["loc",[null,[196,40],[196,61]]],0,0],
+      ["attribute","onchange",["subexpr","action",["setRAMCPUOffering"],[],["loc",[null,[null,null],[197,82]]],0,0],0,0,0,0],
+      ["attribute","value",["get","model.interoutevdcConfig.ram",["loc",[null,[197,124],[197,152]]],0,0,0,0],0,0,0,0],
+      ["element","action",["moreVRAM"],[],["loc",[null,[199,13],[199,34]]],0,0],
+      ["block","if",[["get","isStep11",["loc",[null,[205,14],[205,22]]],0,0,0,0]],[],10,null,["loc",[null,[205,8],[209,15]]]],
+      ["attribute","class",["concat",["horizontal-form r-pt0 step12 ",["subexpr","unless",[["get","isStep12",["loc",[null,[213,54],[213,62]]],0,0,0,0],"hide"],[],["loc",[null,[213,45],[213,71]]],0,0]],0,0,0,0,0],0,0,0,0],
+      ["attribute","class",["concat",["horizontal-form r-pt0 step13 ",["subexpr","unless",[["get","isGteStep13",["loc",[null,[220,54],[220,65]]],0,0,0,0],"hide"],[],["loc",[null,[220,45],[220,74]]],0,0]],0,0,0,0,0],0,0,0,0],
+      ["attribute","class",["concat",["row ",["subexpr","if",[["get","isStep13",["loc",[null,[226,37],[226,45]]],0,0,0,0],"form-group"],[],["loc",[null,[226,32],[226,60]]],0,0]],0,0,0,0,0],0,0,0,0],
+      ["inline","new-select",[],["action",["subexpr","action",[["get","resetSiblingMenus",["loc",[null,[231,47],[231,64]]],0,0,0,0]],[],["loc",[null,[231,39],[231,65]]],0,0],"classNames","col-sm-12 col-md-6 col-lg-6 form-control","content",["subexpr","@mut",[["get","avdiskofferings",["loc",[null,[231,128],[231,143]]],0,0,0,0]],[],[],0,0],"prompt","Please select a disk offering (extra/DATA disk)","optionLabelPath","name","optionValuePath","id","value",["subexpr","@mut",[["get","model.interoutevdcConfig.diskofferingid",["loc",[null,[231,252],[231,291]]],0,0,0,0]],[],[],0,0]],["loc",[null,[231,19],[231,294]]],0,0],
+      ["inline","input",[],["type","text","value",["subexpr","@mut",[["get","model.interoutevdcConfig.disksize",["loc",[null,[232,31],[232,64]]],0,0,0,0]],[],[],0,0],"classNames","col-sm-12 col-md-6 col-lg-6 form-control","placeholder","Disk size (GB)"],["loc",[null,[232,5],[232,149]]],0,0],
+      ["block","if",[["get","isStep13",["loc",[null,[236,14],[236,22]]],0,0,0,0]],[],11,null,["loc",[null,[236,8],[240,15]]]],
+      ["attribute","class",["concat",["horizontal-form r-pt0 step14 ",["subexpr","unless",[["get","isStep14",["loc",[null,[244,54],[244,62]]],0,0,0,0],"hide"],[],["loc",[null,[244,45],[244,71]]],0,0]],0,0,0,0,0],0,0,0,0],
+      ["attribute","class",["concat",["horizontal-form r-pt0 step15 ",["subexpr","unless",[["get","isGteStep15",["loc",[null,[251,54],[251,65]]],0,0,0,0],"hide"],[],["loc",[null,[251,45],[251,74]]],0,0]],0,0,0,0,0],0,0,0,0],
+      ["inline","partial",["host/add-common"],[],["loc",[null,[256,2],[256,31]]],0,0],
+      ["inline","partial",["host/add-options"],[],["loc",[null,[256,32],[256,62]]],0,0],
+      ["inline","top-errors",[],["errors",["subexpr","@mut",[["get","errors",["loc",[null,[258,21],[258,27]]],0,0,0,0]],[],[],0,0]],["loc",[null,[258,1],[258,29]]],0,0],
+      ["inline","save-cancel",[],["save","save","cancel","cancel"],["loc",[null,[258,30],[258,73]]],0,0]
     ],
     locals: [],
     templates: [child0, child1, child2, child3, child4, child5, child6, child7, child8, child9, child10, child11]

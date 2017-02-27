@@ -47,24 +47,24 @@
 </section>
 
 <!-- Step 2 -->
-<section class="horizontal-form r-pt0 {{unless isStep2 'hide'}}">
+<section class="horizontal-form r-pt0 step2 {{unless isStep2 'hide'}}">
 	<div class="text-center">
 		<i class="icon icon-spinner icon-spin"></i><i>&nbsp; Authenticating...</i>
 	</div>
 </section>
 
 <!-- Step 3 -->
-<section class="horizontal-form r-pt0 {{unless isGteStep3 'hide'}}">
+<section class="horizontal-form r-pt0 step3 {{unless isGteStep3 'hide'}}">
 	<div class="container-fluid">
-		<div class="over-hr r-mt20 r-mb20">
+		<div class="over-hr r-mt20 r-mb20 test-1 test-1-test">
 			<span>AVAILABILITY ZONE</span>
 		</div>
 		<div class="row {{if isStep3 'form-group'}}">
 			<div class="col-sm-12 col-md-2 form-label">
 				<label class="form-control-static">Availability Zone</label>
 			</div>
-       			<div class="col-sm-12 col-md-8">
-        		  {{new-select classNames="form-control" content=avzones prompt='Please select a zone' optionLabelPath='name' optionValuePath='id' value=model.%%DRIVERNAME%%Config.zoneid}}
+       			<div class="col-sm-12 col-md-8 test-2">
+        		  {{new-select classNames="form-control" action=(action resetSiblingMenus) content=avzones prompt='Please select a zone' optionLabelPath='name' optionValuePath='id' value=model.%%DRIVERNAME%%Config.zoneid}}
         		</div>
 		</div>
 	</div>
@@ -76,14 +76,14 @@
 </section>
 
 <!-- Step 4 -->
-<section class="horizontal-form r-pt0 {{unless isStep4 'hide'}}">
+<section class="horizontal-form r-pt0 step4 {{unless isStep4 'hide'}}">
 	<div class="text-center">
 		<i class="icon icon-spinner icon-spin"></i><i>&nbsp; Please wait...</i>
 	</div>
 </section>
 
 <!-- Step 5 -->
-<section class="horizontal-form r-pt0 {{unless isGteStep5 'hide'}}">
+<section class="horizontal-form r-pt0 step5 {{unless isGteStep5 'hide'}}">
         <div class="container-fluid">
                 <div class="over-hr r-mt20 r-mb20">
                         <span>Network</span>
@@ -93,7 +93,7 @@
                                 <label class="form-control-static">Network</label>
                         </div>
                         <div class="col-sm-12 col-md-8">
-                          {{new-select classNames="form-control" content=avnetworks prompt='Please select a network' optionLabelPath='name' optionValuePath='id' value=model.%%DRIVERNAME%%Config.networkid }}
+                          {{new-select action=(action resetSiblingMenus) classNames="form-control" content=avnetworks prompt='Please select a network' optionLabelPath='name' optionValuePath='id' value=model.%%DRIVERNAME%%Config.networkid }}
                         </div>
                 </div>
         </div>
@@ -105,14 +105,14 @@
 </section>
 
 <!-- Step 6 -->
-<section class="horizontal-form r-pt0 {{unless isStep6 'hide'}}">
+<section class="horizontal-form r-pt0 step6 {{unless isStep6 'hide'}}">
         <div class="text-center">
                 <i class="icon icon-spinner icon-spin"></i><i>&nbsp; Please wait...</i>
         </div>
 </section>
 
 <!-- Step 7 -->
-<section class="horizontal-form r-pt0 {{unless isGteStep7 'hide'}}">
+<section class="horizontal-form r-pt0 step7 {{unless isGteStep7 'hide'}}">
         <div class="container-fluid">
                 <div class="over-hr r-mt20 r-mb20">
                         <span>Template Type</span>
@@ -122,7 +122,7 @@
                                 <label class="form-control-static">Template Type</label>
                         </div>
                         <div class="col-sm-12 col-md-8">
-                          {{new-select classNames="form-control" content=avtemplatestype prompt='Please select a template type' optionLabelPath='name' optionValuePath='id' value=model.%%DRIVERNAME%%Config.templatefilter }}
+                         {{new-select action=(action resetSiblingMenus) classNames="form-control" content=avtemplatestype prompt='Please select a template type' optionLabelPath='name' optionValuePath='id' value=model.%%DRIVERNAME%%Config.templatefilter }}
                         </div>
                 </div>
         </div>
@@ -134,14 +134,14 @@
 </section>
 
 <!-- Step 8 -->
-<section class="horizontal-form r-pt0 {{unless isStep8 'hide'}}">
+<section class="horizontal-form r-pt0 step8 {{unless isStep8 'hide'}}">
         <div class="text-center">
                 <i class="icon icon-spinner icon-spin"></i><i>&nbsp; Please wait...</i>
         </div>
 </section>
 
 <!-- Step 9 -->
-<section class="horizontal-form r-pt0 {{unless isGteStep9 'hide'}}">
+<section class="horizontal-form r-pt0 step9 {{unless isGteStep9 'hide'}}">
         <div class="container-fluid">
                 <div class="over-hr r-mt20 r-mb20">
                         <span>Template</span>
@@ -151,7 +151,7 @@
                                 <label class="form-control-static">Template</label>
                         </div>
                         <div class="col-sm-12 col-md-8">
-                          {{new-select classNames="form-control" content=avtemplates prompt='Please select a template' optionLabelPath='name' optionValuePath='id' value=model.%%DRIVERNAME%%Config.templateid }}
+                          {{new-select action=(action resetSiblingMenus) classNames="form-control" content=avtemplates prompt='Please select a template' optionLabelPath='name' optionValuePath='id' value=model.%%DRIVERNAME%%Config.templateid }}
                         </div>
                 </div>
         </div>
@@ -163,54 +163,73 @@
 </section>
 
 <!-- Step 10 -->
-<section class="horizontal-form r-pt0 {{unless isStep10 'hide'}}">
+<section class="horizontal-form r-pt0 step10 {{unless isStep10 'hide'}}">
         <div class="text-center">
                 <i class="icon icon-spinner icon-spin"></i><i>&nbsp; Please wait...</i>
         </div>
 </section>
 
 <!-- Step 11 -->
-<section class="horizontal-form r-pt0 {{unless isGteStep11 'hide'}}">
+<section class="horizontal-form r-pt0 step11 {{unless isGteStep11 'hide'}}">
         <div class="container-fluid">
                 <div class="over-hr r-mt20 r-mb20">
                         <span>Service Offering</span>
                 </div>
                 <div class="row {{if isStep11 'form-group'}}">
                         <div class="col-sm-12 col-md-2 form-label">
-                                <label class="form-control-static">ServiceOffering</label>
+                                <label class="form-control-static">CPU</label>
                         </div>
-                        <div class="col-sm-12 col-md-8">
-                          {{new-select classNames="form-control" content=avservofferings  prompt='Please select a service offering (format: RAM-CPU)' optionLabelPath='name' optionValuePath='id' value=model.%%DRIVERNAME%%Config.serviceofferingid }}
+		
+			<div class="col-sml-12 col-md-10">
+				<button {{action "lessCPU"}} class="btn btn-primary btn-square cpu minus"> - </button> 
+				<input id="cpuoffering" maxlength="2" onchange={{action "setRAMCPUOffering"}}  type="text" class="form-control" value={{model.%%DRIVERNAME%%Config.cpu}} />
+				<span class="cpu-label">vCPU</span>
+				<button {{action "moreCPU"}} class="btn btn-primary btn-square cpu plus"> + </button>
+			</div>
+			<div class="clearfix"></div><br />
+
+
+			<div class="col-sm-12 col-md-2 form-label">
+                                <label class="form-control-static">VRAM</label>
                         </div>
+	                <div class="col-sml-12 col-md-10"> 
+                                <button {{action "lessVRAM"}} class="btn btn-primary btn-square vram minus"> - </button>
+				<input id="vramoffering" maxlength="4" onchange={{action "setRAMCPUOffering"}} type="text" class="form-control" value={{model.%%DRIVERNAME%%Config.ram}} />
+                            	<span class="vram-label">GB</span>
+			  <button {{action "moreVRAM"}} class="btn btn-primary btn-square vram plus"> + </button>
+                        	<!-- <label>{{model.%%DRIVERNAME%%Config.ram}} vRAM</label>-->
+			</div>
+
                 </div>
         </div>
         {{#if isStep11}} {{top-errors errors=errors}}
         <div class="footer-actions">
-                <button {{action "selectServiceOffering"}} class="btn btn-primary">Continue</button> <button {{action "cancel"}} class="btn btn-link">Cancel</button>
+               <button {{action "getServiceOfferingId"}} class="btn btn-primary">Continue</button> <button {{action "cancel"}} class="btn btn-link">Cancel</button>
         </div>
         {{/if}}
 </section>
 
 <!-- Step 12 -->
-<section class="horizontal-form r-pt0 {{unless isStep12 'hide'}}">
+<section class="horizontal-form r-pt0 step12 {{unless isStep12 'hide'}}">
         <div class="text-center">
                 <i class="icon icon-spinner icon-spin"></i><i>&nbsp; Please wait...</i>
         </div>
 </section>
 
 <!-- Step 13 -->
-<section class="horizontal-form r-pt0 {{unless isGteStep13 'hide'}}">
+<section class="horizontal-form r-pt0 step13 {{unless isGteStep13 'hide'}}">
         <div class="container-fluid">
                 <div class="over-hr r-mt20 r-mb20">
                         <span>Disk Offering</span>
                 </div>
+
                 <div class="row {{if isStep13 'form-group'}}">
                         <div class="col-sm-12 col-md-2 form-label">
-                                <label class="form-control-static">ServiceOffering</label>
+                                <label class="form-control-static">Disc Type / Disk Size (GB)</label>
                         </div>
                         <div class="col-sm-12 col-md-8">
-                          {{new-select classNames="form-control" content=avdiskofferings  prompt='Please select a disk offering (extra/DATA disk)' optionLabelPath='name' optionValuePath='id' value=model.%%DRIVERNAME%%Config.diskofferingid }}
-			  {{input type="text" value=model.%%DRIVERNAME%%Config.disksize classNames="form-control" placeholder="Disk size (GB)"}}
+	                  {{new-select action=(action resetSiblingMenus) classNames="col-sm-12 col-md-6 col-lg-6 form-control" content=avdiskofferings  prompt='Please select a disk offering (extra/DATA disk)' optionLabelPath='name' optionValuePath='id' value=model.%%DRIVERNAME%%Config.diskofferingid }}
+			  {{input type="text" value=model.%%DRIVERNAME%%Config.disksize classNames="col-sm-12 col-md-6 col-lg-6 form-control" placeholder="Disk size (GB)"}}
 			</div>
                 </div>
         </div>
@@ -222,14 +241,14 @@
 </section>
 
 <!-- Step 14 -->
-<section class="horizontal-form r-pt0 {{unless isStep14 'hide'}}">
+<section class="horizontal-form r-pt0 step14 {{unless isStep14 'hide'}}">
 	<div class="text-center">
 		<i class="icon icon-spinner icon-spin"></i><i>&nbsp; Please wait...</i>
 	</div>
 </section>
 
 <!-- Step 15 -->
-<section class="horizontal-form r-pt0 {{unless isGteStep15 'hide'}}">
+<section class="horizontal-form r-pt0 step15 {{unless isGteStep15 'hide'}}">
 	<div class="container-fluid">
 		<div class="over-hr r-mt20 r-mb20">
 			<span>INSTANCE</span>
@@ -238,3 +257,6 @@
 	</div>
 	{{top-errors errors=errors}} {{save-cancel save="save" cancel="cancel"}}
 </section>
+
+
+
