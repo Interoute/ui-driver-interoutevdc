@@ -1,12 +1,12 @@
 # ui-driver-interoutevdc
-Rancher UI driver for [Interoute VDC](https://cloudstore.interoute.com/account/login) docker-machine driver
+Rancher UI driver for the [Interoute VDC](https://cloudstore.interoute.com) docker-machine driver.
 
 ## Development
 
 This package contains a small web-server that will serve up the custom driver UI at `http://localhost:3000/component.js`.  You can run this while developing and point the Rancher settings there.
 * `npm start`
 * The driver name can be optionally overridden: `npm start -- --name=DRIVERNAME`
-* The compiled files are viewable at http://localhost:3000.
+* The compiled files are viewable at http://localhost:3000 .
 * **Note:** The development server does not currently automatically restart when files are changed.
 
 ## Building
