@@ -1,10 +1,10 @@
 define('ui/components/machine/driver-interoutevdc/component', ['exports', 'ember', 'ui/mixins/driver', 'ui/components/new-select/component'],
-    function(exports, _ember, _uiMixinsDriver, _newSelect) {
+    function(exports, _ember, _uiMixinsDriver, _newSelect) { 
         var Ember = _ember.default;
         var DriverMixin = _uiMixinsDriver.default;
         var avServOfferingsArray = [];
         var changeServOffering = false;
-        var serviceOfferingName;
+        var serviceOfferingName; 
         exports['default'] = Ember.Component.extend(DriverMixin, {
         driverName: 'interoutevdc',
         config: Ember.computed.alias('model.interoutevdcConfig'),
@@ -38,7 +38,7 @@ define('ui/components/machine/driver-interoutevdc/component', ['exports', 'ember
             let regions = [ { "id": "Asia", "name": "Asia" }, { "id": "Europe", "name": "EU" }, { "id": "USA", "name": "US" } ];
             if ( this.get('model.interoutevdcConfig.vdcregion') == '' ) {
                 this.set('model.interoutevdcConfig.vdcregion', regions[0].id);
-            }
+            }		
 
             this.set('avregions', regions);
         }.on('init'),
@@ -48,7 +48,7 @@ define('ui/components/machine/driver-interoutevdc/component', ['exports', 'ember
             let len = ele.length;
             let selectEle = ele.eq(len -1).find('select');
             let selectOpt = selectEle.find('option:selected');
-            if (selectEle[0] !== undefined && selectEle[0].selectedIndex === 0 ) {
+            if (selectEle[0] !== undefined && selectEle[0].selectedIndex === 0 ) { 
                 selectEle[0].selectedIndex = 1;
             }
 
@@ -84,7 +84,7 @@ define('ui/components/machine/driver-interoutevdc/component', ['exports', 'ember
             },
 
             cloudAuth: function() {
-                this.set('step', 2);
+                this.set('step', 2);	
                 this.apiRequest('listZones').then((res) => {
                     let zones = [];
                     res.listzonesresponse.zone.forEach((zone) => {
@@ -94,7 +94,7 @@ define('ui/components/machine/driver-interoutevdc/component', ['exports', 'ember
                         };
                     zones.push(obj);
                     });
-
+        
                     this.set('model.interoutevdcConfig.zoneid', zones[0].id);
                     this.set('avzones', zones);
                     this.set('step', 3);
@@ -105,8 +105,8 @@ define('ui/components/machine/driver-interoutevdc/component', ['exports', 'ember
                     this.set('step', 1);
                 });
             },
-
-            selectZone: function() {
+        
+            selectZone: function() {	
                 this.set('step', 4);
                 this.apiRequest('listNetworks', { zoneid: this.get('model.interoutevdcConfig.zoneid') }).then((res) => {
                     let networks = [];
@@ -161,7 +161,7 @@ define('ui/components/machine/driver-interoutevdc/component', ['exports', 'ember
                         this.set('errors', errors);
                         this.set('step', 3);
                     } else {
-                        this.set('model.interoutevdcConfig.templateid', templates[0].id);
+                        this.set('model.interoutevdcConfig.templateid', templates[0].id);		
                         this.set('avtemplates', templates);
                         this.set('step', 9);
                     }
@@ -186,7 +186,7 @@ define('ui/components/machine/driver-interoutevdc/component', ['exports', 'ember
                 });
                 this.set('model.interoutevdcConfig.ram', 1);
                 this.set('model.interoutevdcConfig.cpu', 1);
-                this.set('model.interoutevdcConfig.serviceOfferingName', '1024-1');
+                this.set('model.interoutevdcConfig.serviceOfferingName', '1024-1'); 
                 this.set('avservofferings', serviceofferings);
                 this.set('step', 11);
                 avServOfferingsArray.push(serviceofferings);
@@ -198,10 +198,10 @@ define('ui/components/machine/driver-interoutevdc/component', ['exports', 'ember
                 });
             },
 
-
-            getServiceOfferingId: function() {
+        
+            getServiceOfferingId: function() { 	
                 var result = this.apiRequest('listServiceOfferings', { issystem: 'false', name: this.get('model.interoutevdcConfig.serviceOfferingName') }).then((res) => {
-                    this.set('model.interoutevdcConfig.serviceofferingid', res.listserviceofferingsresponse.serviceoffering[0].id);
+                    this.set('model.interoutevdcConfig.serviceofferingid', res.listserviceofferingsresponse.serviceoffering[0].id);			
                     return this;
                 }, (err) => {
                     let errors = this.get('errors') || [];
@@ -271,7 +271,7 @@ define('ui/components/machine/driver-interoutevdc/component', ['exports', 'ember
                     var vram = this.get('model.interoutevdcConfig.ram');
                     this.set('model.interoutevdcConfig.serviceOfferingName', (vram * 1024) + '-' + cpu );
                 }
-
+    
                 if (this.get('model.interoutevdcConfig.cpu') <= 0) {
                     this.set('model.interoutevdcConfig.cpu', 1);
                     $('#cpuoffering').val('1');
@@ -297,9 +297,9 @@ define('ui/components/machine/driver-interoutevdc/component', ['exports', 'ember
                 if ( this.get('model.interoutevdcConfig.cpu') > 1) {
                     var cpu = this.get('model.interoutevdcConfig.cpu') - 1;
                     var vram = this.get('model.interoutevdcConfig.ram');
-                    this.set('model.interoutevdcConfig.cpu', cpu);
+                    this.set('model.interoutevdcConfig.cpu', cpu); 
                     this.set('model.interoutevdcConfig.serviceOfferingName', (vram * 1024) + '-' + cpu );
-                }
+                }		
             },
 
             moreCPU: function(e){
@@ -332,14 +332,14 @@ define('ui/components/machine/driver-interoutevdc/component', ['exports', 'ember
                 this.set('step', 15);
             }
         },
-
+        
         apiRequest: function(command, params) {
-            let url             = this.get('app.proxyEndpoint') + '/' + this.get('model.interoutevdcConfig.apiurl');
-            params              = params || {};
-            params.command      = command;
-            params.apiKey       = this.get('model.interoutevdcConfig.apikey');
-            params.region       = this.get('model.interoutevdcConfig.vdcregion');
-            params.response     = 'json';
+            let url		= this.get('app.proxyEndpoint') + '/' + this.get('model.interoutevdcConfig.apiurl');
+            params		= params || {};
+            params.command	= command;
+            params.apiKey	= this.get('model.interoutevdcConfig.apikey');
+            params.region	= this.get('model.interoutevdcConfig.vdcregion');
+            params.response	= 'json';
 
             return this.ajaxPromise({url: url, method: 'POST', dataType: 'json',
                 headers: {
@@ -370,7 +370,7 @@ define('ui/components/machine/driver-interoutevdc/component', ['exports', 'ember
                         resolve({xhr: xhr, textStatus: textStatus},'AJAX Response: '+ opt.url + '(' + xhr.status + ')');
                     }
                 }
-
+            
                 function fail(xhr, textStatus, err) {
                     reject({xhr: xhr, textStatus: textStatus, err: err}, 'AJAX Error:' + opt.url + '(' + xhr.status + ')');
                 }
@@ -379,8 +379,8 @@ define('ui/components/machine/driver-interoutevdc/component', ['exports', 'ember
         },
 
         apiErrorMessage: function(err, kind, prefix, def) {
-            let answer  = (err.xhr || {}).responseJSON || {};
-            let text    = (answer[kind] || {}).errortext;
+            let answer	= (err.xhr || {}).responseJSON || {};
+            let text	= (answer[kind] || {}).errortext;
                 if (text) {
                     return prefix + ": " + text;
                 } else {
@@ -422,7 +422,7 @@ define('ui/components/machine/driver-interoutevdc/component', ['exports', 'ember
 
 // extend component test
 //export default ComponentExtended.extend({
-
+  
 //});
 
 
