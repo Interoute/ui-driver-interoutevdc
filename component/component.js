@@ -60,7 +60,7 @@ define('ui/components/machine/driver-%%DRIVERNAME%%/component', ['exports', 'emb
         }.on('didRender'),
 
         resetSiblingMenus:function(e) {
-             $('section.horizontal-form').removeClass('selected-item');
+            $('section.horizontal-form').removeClass('selected-item');
             $('select option[value="' + e.id +'"]').closest('section.horizontal-form').addClass('selected-item');
 
             var classStr= $('select option[value="' + e.id +'"]').closest('section.horizontal-form').attr('class');
