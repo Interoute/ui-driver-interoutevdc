@@ -130,7 +130,7 @@ define('ui/components/machine/driver-interoutevdc/component', ['exports', 'ember
 
             selectNetwork: function() {
                 this.set('step', 6);
-                let templatestype = [ { "id": "self", "name": "Private" }, { "id": "featured", "name": "Public" } ];
+                let templatestype = [ { "id": "featured", "name": "Public" }, { "id": "self", "name": "Private" } ];
                 if (this.get('model.interoutevdcConfig.templatefilter') == ''){
                     this.set('model.interoutevdcConfig.templatefilter', templatestype[0].id);
                 }

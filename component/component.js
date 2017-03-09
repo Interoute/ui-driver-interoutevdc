@@ -130,7 +130,7 @@ define('ui/components/machine/driver-%%DRIVERNAME%%/component', ['exports', 'emb
 
             selectNetwork: function() {
                 this.set('step', 6);
-                let templatestype = [ { "id": "self", "name": "Private" }, { "id": "featured", "name": "Public" } ];
+                let templatestype = [ { "id": "featured", "name": "Public" }, { "id": "self", "name": "Private" } ];
                 if (this.get('model.%%DRIVERNAME%%Config.templatefilter') == ''){
                     this.set('model.%%DRIVERNAME%%Config.templatefilter', templatestype[0].id);
                 }
