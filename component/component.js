@@ -113,7 +113,7 @@ define('ui/components/machine/driver-%%DRIVERNAME%%/component', ['exports', 'emb
                     (res.listnetworksresponse.network || []).forEach((net) => {
                         let obj = {
                             id: net.id,
-                            name: net.name,
+                            name: net.displaytext,
                         };
                         networks.push(obj);
                     });

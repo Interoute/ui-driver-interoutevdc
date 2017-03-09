@@ -113,7 +113,7 @@ define('ui/components/machine/driver-interoutevdc/component', ['exports', 'ember
                     (res.listnetworksresponse.network || []).forEach((net) => {
                         let obj = {
                             id: net.id,
-                            name: net.name,
+                            name: net.displaytext,
                         };
                         networks.push(obj);
                     });
@@ -226,10 +226,10 @@ define('ui/components/machine/driver-interoutevdc/component', ['exports', 'ember
                     this.set('step', 13);
                 }, (err) => {
                 let errors = this.get('errors') || [];
-                    errors.pushObject(this.apiErrorMessage(err, '', '', 'No disk offerings found!'));
-                    this.set('errors', errors);
-                    this.set('step', 3);
-                });
+                errors.pushObject(this.apiErrorMessage(err, '', '', 'No disk offerings found!'));
+                this.set('errors', errors);
+                this.set('step', 3);
+                });				
             },
 
             selectServiceOffering: function() {
