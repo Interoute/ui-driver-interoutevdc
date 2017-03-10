@@ -150,7 +150,7 @@ define('ui/components/machine/driver-interoutevdc/component', ['exports', 'ember
                     (res.listtemplatesresponse.template || []).forEach((temp) => {
                         let obj = {
                             id: temp.id,
-                            name: temp.name
+                            name: temp.displaytext
                         };
                         templates.push(obj);
                     });

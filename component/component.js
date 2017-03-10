@@ -150,7 +150,7 @@ define('ui/components/machine/driver-%%DRIVERNAME%%/component', ['exports', 'emb
                     (res.listtemplatesresponse.template || []).forEach((temp) => {
                         let obj = {
                             id: temp.id,
-                            name: temp.name
+                            name: temp.displaytext
                         };
                         templates.push(obj);
                     });
