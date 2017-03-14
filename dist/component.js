@@ -35,7 +35,7 @@ define('ui/components/machine/driver-interoutevdc/component', ['exports', 'ember
                 'interoutevdcConfig': config
             }));
 
-            let regions = [ { "id": "Asia", "name": "Asia" }, { "id": "Europe", "name": "EU" }, { "id": "USA", "name": "US" } ];
+            let regions = [ { "id": "Europe", "name": "EU" }, { "id": "USA", "name": "US" }, { "id": "Asia", "name": "Asia" } ];
             if ( this.get('model.interoutevdcConfig.vdcregion') == '' ) {
                 this.set('model.interoutevdcConfig.vdcregion', regions[0].id);
             }		

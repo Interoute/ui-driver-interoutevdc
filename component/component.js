@@ -35,7 +35,7 @@ define('ui/components/machine/driver-%%DRIVERNAME%%/component', ['exports', 'emb
                 '%%DRIVERNAME%%Config': config
             }));
 
-            let regions = [ { "id": "Asia", "name": "Asia" }, { "id": "Europe", "name": "EU" }, { "id": "USA", "name": "US" } ];
+            let regions = [ { "id": "Europe", "name": "EU" }, { "id": "USA", "name": "US" }, { "id": "Asia", "name": "Asia" } ];
             if ( this.get('model.%%DRIVERNAME%%Config.vdcregion') == '' ) {
                 this.set('model.%%DRIVERNAME%%Config.vdcregion', regions[0].id);
             }		
