@@ -1,10 +1,81 @@
+<!--<section class="horizontal-form">-->
+    <!--<form>-->
+        <!--<div class="container-fluid">-->
+            <!--<div class="over-hr r-mt20 r-mb20">-->
+                <!--<span>ACCOUNT ACCESS</span>-->
+            <!--</div>-->
+            <!--<p>Hello World</p>-->
+        <!--</div>-->
+    <!--</form>-->
+<!--</section>-->
 <section class="horizontal-form">
+  {{#accordion-list showExpandAll=false as | al expandFn |}}
+    {{!-- This line shows the driver title which you don't have to change it --}}
+    <div class="over-hr mb-20"><span>{{driverOptionsTitle}}</span></div>
+
+    {{!-- An example input option --}}
+    <div class="row box mt-20">
+      <h4>Instance Options</h4>
+      <div class="row">
+        <div class="col span-2 col-inline">
+          <label>CPUs</label>
+        </div>
+
+        <div class="col span-1">
+          {{config.cpuCount}}
+        </div>
+        <div class="col span-3">
+          {{input-slider value=config.cpuCount valueMin=1 valueMax=32}}
+        </div>
+
+        <div class="col span-2 col-inline">
+          <label>Memory Size</label>
+        </div>
+        <div class="col span-4">
+          <div class="input-group">
+            {{input-integer min=1 value=config.memorySize classNames="form-control"}}
+            <div class="input-group-addon bg-default">MB</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {{!-- This following contains the Name, Labels and Engine Options fields --}}
+    <div class="over-hr"><span>{{templateOptionsTitle}}</span></div>
+
+    {{form-name-description
+      model=model
+      nameRequired=true
+    }}
+
+    {{form-user-labels
+      initialLabels=labelResource.labels
+      setLabels=(action 'setLabels')
+      expandAll=expandAll
+      expand=(action expandFn)
+    }}
+
+    {{form-engine-opts
+      machine=model
+      showEngineUrl=showEngineUrl
+    }}
+  {{/accordion-list}}
+
+  {{!-- This component shows errors produced by validate() in the component --}}
+  {{top-errors errors=errors}}
+
+  {{!-- This component shows the Create and Cancel buttons --}}
+  {{save-cancel save="save" cancel="cancel"}}
+</section>
+
+{{!--<section class="horizontal-form">
     <form>
         <div class="container-fluid">
             <div class="over-hr r-mt20 r-mb20">
                 <span>ACCOUNT ACCESS</span>
             </div>
-            <div class="row {{if isStep1 'form-group'}}">
+            <p>Hello World</p>
+            {{!--<div class="row {{if isStep1 'form-group'}}">
                 <div class="col-sm-12 col-md-2 form-label">
                     <label class="form-control-static">API Key</label>
                 </div>
@@ -43,8 +114,8 @@
             <button {{action "cloudAuth"}} name="submit" class="btn btn-primary">Authenticate</button> <button {{action "cancel"}} class="btn btn-link">Cancel</button>
         </div>
     {{/if}}
-</section>
-
+</section>--}}
+{{!--<!--
 <!-- Step 2 -->
 <section class="horizontal-form r-pt0 step2 {{unless isStep2 'hide'}}">
     <div class="text-center">
@@ -67,7 +138,7 @@
             </div>
         </div>
     </div>
-    
+
     {{#if isStep3}} {{top-errors errors=errors}}
         <div class="footer-actions">
             <button {{action "selectZone"}} class="btn btn-primary">Continue</button> <button {{action "cancel"}} class="btn btn-link">Cancel</button>
@@ -180,7 +251,7 @@
                 <label class="form-control-static">CPU</label>
             </div>
             <div class="col-sml-12 col-md-10">
-                <button {{action "lessCPU"}} class="btn btn-primary btn-square cpu minus"> - </button> 
+                <button {{action "lessCPU"}} class="btn btn-primary btn-square cpu minus"> - </button>
                 <input id="cpuoffering" maxlength="2" onchange={{action "setRAMCPUOffering"}}  type="text" class="form-control" value={{model.%%DRIVERNAME%%Config.cpu}} />
                 <span class="cpu-label">vCPU</span>
                 <button {{action "moreCPU"}} class="btn btn-primary btn-square cpu plus"> + </button>
@@ -189,7 +260,7 @@
             <div class="col-sm-12 col-md-2 form-label">
                 <label class="form-control-static">VRAM</label>
             </div>
-            <div class="col-sml-12 col-md-10"> 
+            <div class="col-sml-12 col-md-10">
                 <button {{action "lessVRAM"}} class="btn btn-primary btn-square vram minus"> - </button>
                 <input id="vramoffering" maxlength="4" onchange={{action "setRAMCPUOffering"}} type="text" class="form-control" value={{model.%%DRIVERNAME%%Config.ram}} />
                 <span class="vram-label">GB</span>
@@ -252,3 +323,4 @@
     </div>
     {{top-errors errors=errors}} {{save-cancel save="save" cancel="cancel"}}
 </section>
+-->--}}

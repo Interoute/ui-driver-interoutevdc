@@ -3,7 +3,7 @@ const gulp        = require('gulp');
 const clean       = require('gulp-clean');
 const gulpConcat  = require('gulp-concat');
 const gulpConnect = require('gulp-connect');
-const emCompiler  = require('./bower_components/ember/ember-template-compiler');
+const emCompiler  = require('ember-source/dist/ember-template-compiler');
 const htmlbars    = require('gulp-htmlbars-compiler');
 const wrapAmd     = require('gulp-wrap-amd');
 const replace     = require('gulp-replace');
@@ -27,7 +27,11 @@ if (!DRIVER_NAME) {
 
 gulp.task('default', ['build']);
 
-gulp.task('server', ['build'], function() {
+gulp.task('watch', function() {
+  gulp.watch(['./component/*.js', './component/*.hbs', './component/*.css'], ['build']);
+});
+
+gulp.task('server', ['build', 'watch'], function() {
   return gulpConnect.server({
     root: [DIST],
     port: process.env.PORT || 3000,
@@ -68,10 +72,12 @@ gulp.task('compiled', ['js'], function() {
   .pipe(replace(NAME_TOKEN, DRIVER_NAME))
   .pipe(htmlbars({compiler: emCompiler}))
   .pipe(wrapAmd({
-    deps: ['exports', 'ember', 'ui/mixins/driver'],
-    params: ['exports', '_ember', '_uiMixinsDriver'],
+    deps: ['exports'],
+    params: ['exports'],
+//    deps: ['exports', 'ember', 'ui/mixins/driver'],
+//    params: ['exports', '_ember', '_uiMixinsDriver'],
     moduleRoot: 'component/',
-    modulePrefix: 'ui/components/machine/driver-' + DRIVER_NAME + '/'
+    modulePrefix: 'shared/components/node-driver/driver-' + DRIVER_NAME + '/'
   }))
   .pipe(replace(
     "return Ember.TEMPLATES['template']", 'exports["default"]'
@@ -83,5 +89,6 @@ gulp.task('compiled', ['js'], function() {
 gulp.task('build', ['compiled','css','assets'], function() {
   return gulp.src([`${TMP}/*.js`])
   .pipe(gulpConcat('component.js',{newLine: ';\n'}))
-  .pipe(gulp.dest(DIST));
+  .pipe(gulp.dest(DIST))
+  .pipe(gulpConnect.reload());
 });

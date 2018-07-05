@@ -50,10 +50,10 @@
 .btn-square.cpu.minus,
 .btn-square.vram.minus {
    background-color: #d1d1d1;
-   border-color: #d1d1d1;     
+   border-color: #d1d1d1;
 }
 
-.btn-square.cpu.minus:hover, 
+.btn-square.cpu.minus:hover,
 .btn-square.vram.minus:hover {
    background-color: #a7a7a7;
    border-color: #a7a7a7;

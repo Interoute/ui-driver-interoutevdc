@@ -1,10 +1,78 @@
-define('ui/components/machine/driver-%%DRIVERNAME%%/component', ['exports', 'ember', 'ui/mixins/driver', 'ui/components/new-select/component'],
-    function(exports, _ember, _uiMixinsDriver, _newSelect) { 
+/* v----- Do not change anything between here
+ *       (the DRIVERNAME placeholder will be automatically replaced during build) */
+define('ui/components/node-driver/driver-%%DRIVERNAME%%/component', ['exports', 'ember', 'shared/components/node-driver/driver-%%DRIVERNAME%%/component'], function (exports, _ember, _component) {
+  exports['default'] = _component['default'];
+});
+
+define('shared/components/node-driver/driver-%%DRIVERNAME%%/component', ['exports', 'ember', 'shared/mixins/node-driver', 'shared/components/node-driver/driver-%%DRIVERNAME%%/template'], function (exports, _ember, _uiMixinsDriver, _template) {
+/* ^--- And here */
+
+  // You can put ember object here
+  var computed = Ember.computed;
+  var get = Ember.get;
+  var set = Ember.set;
+  var alias = Ember.computed.alias;
+
+/* v----- Do not change anything between here
+ *       (the DRIVERNAME placeholder will be automatically replaced during build) */
+  exports['default'] = _ember['default'].Component.extend(_uiMixinsDriver['default'], {
+    layout: _template.default,
+    driverName: '%%DRIVERNAME%%',
+    config: alias('model.%%DRIVERNAME%%Config'),
+/* ^--- And here */
+
+    // Write your component here, starting with setting 'model' to a machine with your config populated
+    bootstrap: function() {
+      let config = get(this, 'globalStore').createRecord({
+        type: '%%DRIVERNAME%%Config',
+        cpuCount: 2,
+        memorySize: 2048,
+      });
+
+      set(this, 'model.%%DRIVERNAME%%Config', config);
+    },
+
+    // Add custom validation beyond what can be done from the config API schema
+    validate() {
+      // Get generic API validation errors
+      this._super();
+      var errors = get(this, 'errors')||[];
+      if ( !get(this, 'model.name') ) {
+        errors.push('Name is required');
+      }
+
+      // Add more specific errors
+
+      // Check something and add an error entry if it fails:
+      if ( parseInt(get(this, 'config.memorySize'),10) < 1024 )
+      {
+        errors.push('Memory Size must be at least 1024 MB');
+      }
+
+      // Set the array of errors for display,
+      // and return true if saving should continue.
+      if ( get(errors, 'length') )
+      {
+        set(this, 'errors', errors);
+        return false;
+      }
+      else
+      {
+        set(this, 'errors', null);
+        return true;
+      }
+    }
+    // Any computed properties or custom logic can go here
+  });
+});
+//var hw = "Hello World";
+/*define('ui/components/machine/driver-%%DRIVERNAME%%/component', ['exports', 'ember', 'ui/mixins/driver', 'ui/components/new-select/component'],
+    function(exports, _ember, _uiMixinsDriver, _newSelect) {
         var Ember = _ember.default;
         var DriverMixin = _uiMixinsDriver.default;
         var avServOfferingsArray = [];
         var changeServOffering = false;
-        var serviceOfferingName; 
+        var serviceOfferingName;
         exports['default'] = Ember.Component.extend(DriverMixin, {
         driverName: '%%DRIVERNAME%%',
         config: Ember.computed.alias('model.%%DRIVERNAME%%Config'),
@@ -38,7 +106,7 @@ define('ui/components/machine/driver-%%DRIVERNAME%%/component', ['exports', 'emb
             let regions = [ { "id": "Europe", "name": "EU" }, { "id": "USA", "name": "US" }, { "id": "Asia", "name": "Asia" } ];
             if ( this.get('model.%%DRIVERNAME%%Config.vdcregion') == '' ) {
                 this.set('model.%%DRIVERNAME%%Config.vdcregion', regions[0].id);
-            }		
+            }
 
             this.set('avregions', regions);
         }.on('init'),
@@ -48,7 +116,7 @@ define('ui/components/machine/driver-%%DRIVERNAME%%/component', ['exports', 'emb
             let len = ele.length;
             let selectEle = ele.eq(len -1).find('select');
             let selectOpt = selectEle.find('option:selected');
-            if (selectEle[0] !== undefined && selectEle[0].selectedIndex === 0 ) { 
+            if (selectEle[0] !== undefined && selectEle[0].selectedIndex === 0 ) {
                 selectEle[0].selectedIndex = 1;
             }
 
@@ -84,7 +152,7 @@ define('ui/components/machine/driver-%%DRIVERNAME%%/component', ['exports', 'emb
             },
 
             cloudAuth: function() {
-                this.set('step', 2);	
+                this.set('step', 2);
                 this.apiRequest('listZones').then((res) => {
                     let zones = [];
                     res.listzonesresponse.zone.forEach((zone) => {
@@ -94,7 +162,7 @@ define('ui/components/machine/driver-%%DRIVERNAME%%/component', ['exports', 'emb
                         };
                     zones.push(obj);
                     });
-        
+
                     this.set('model.%%DRIVERNAME%%Config.zoneid', zones[0].id);
                     this.set('avzones', zones);
                     this.set('step', 3);
@@ -105,8 +173,8 @@ define('ui/components/machine/driver-%%DRIVERNAME%%/component', ['exports', 'emb
                     this.set('step', 1);
                 });
             },
-        
-            selectZone: function() {	
+
+            selectZone: function() {
                 this.set('step', 4);
                 this.apiRequest('listNetworks', { zoneid: this.get('model.%%DRIVERNAME%%Config.zoneid') }).then((res) => {
                     let networks = [];
@@ -161,7 +229,7 @@ define('ui/components/machine/driver-%%DRIVERNAME%%/component', ['exports', 'emb
                         this.set('errors', errors);
                         this.set('step', 3);
                     } else {
-                        this.set('model.%%DRIVERNAME%%Config.templateid', templates[0].id);		
+                        this.set('model.%%DRIVERNAME%%Config.templateid', templates[0].id);
                         this.set('avtemplates', templates);
                         this.set('step', 9);
                     }
@@ -186,7 +254,7 @@ define('ui/components/machine/driver-%%DRIVERNAME%%/component', ['exports', 'emb
                 });
                 this.set('model.interoutevdcConfig.ram', 1);
                 this.set('model.interoutevdcConfig.cpu', 1);
-                this.set('model.%%DRIVERNAME%%Config.serviceOfferingName', '1024-1'); 
+                this.set('model.%%DRIVERNAME%%Config.serviceOfferingName', '1024-1');
                 this.set('avservofferings', serviceofferings);
                 this.set('step', 11);
                 avServOfferingsArray.push(serviceofferings);
@@ -198,10 +266,10 @@ define('ui/components/machine/driver-%%DRIVERNAME%%/component', ['exports', 'emb
                 });
             },
 
-        
-            getServiceOfferingId: function() { 	
+
+            getServiceOfferingId: function() {
                 var result = this.apiRequest('listServiceOfferings', { issystem: 'false', name: this.get('model.%%DRIVERNAME%%Config.serviceOfferingName') }).then((res) => {
-                    this.set('model.%%DRIVERNAME%%Config.serviceofferingid', res.listserviceofferingsresponse.serviceoffering[0].id);			
+                    this.set('model.%%DRIVERNAME%%Config.serviceofferingid', res.listserviceofferingsresponse.serviceoffering[0].id);
                     return this;
                 }, (err) => {
                     let errors = this.get('errors') || [];
@@ -229,7 +297,7 @@ define('ui/components/machine/driver-%%DRIVERNAME%%/component', ['exports', 'emb
                 errors.pushObject(this.apiErrorMessage(err, '', '', 'No disk offerings found!'));
                 this.set('errors', errors);
                 this.set('step', 3);
-                });				
+                });
             },
 
             selectServiceOffering: function() {
@@ -271,7 +339,7 @@ define('ui/components/machine/driver-%%DRIVERNAME%%/component', ['exports', 'emb
                     var vram = this.get('model.%%DRIVERNAME%%Config.ram');
                     this.set('model.%%DRIVERNAME%%Config.serviceOfferingName', (vram * 1024) + '-' + cpu );
                 }
-    
+
                 if (this.get('model.%%DRIVERNAME%%Config.cpu') <= 0) {
                     this.set('model.%%DRIVERNAME%%Config.cpu', 1);
                     $('#cpuoffering').val('1');
@@ -297,9 +365,9 @@ define('ui/components/machine/driver-%%DRIVERNAME%%/component', ['exports', 'emb
                 if ( this.get('model.%%DRIVERNAME%%Config.cpu') > 1) {
                     var cpu = this.get('model.%%DRIVERNAME%%Config.cpu') - 1;
                     var vram = this.get('model.%%DRIVERNAME%%Config.ram');
-                    this.set('model.%%DRIVERNAME%%Config.cpu', cpu); 
+                    this.set('model.%%DRIVERNAME%%Config.cpu', cpu);
                     this.set('model.%%DRIVERNAME%%Config.serviceOfferingName', (vram * 1024) + '-' + cpu );
-                }		
+                }
             },
 
             moreCPU: function(e){
@@ -332,7 +400,7 @@ define('ui/components/machine/driver-%%DRIVERNAME%%/component', ['exports', 'emb
                 this.set('step', 15);
             }
         },
-        
+
         apiRequest: function(command, params) {
             let url		= this.get('app.proxyEndpoint') + '/' + this.get('model.%%DRIVERNAME%%Config.apiurl');
             params		= params || {};
@@ -370,7 +438,7 @@ define('ui/components/machine/driver-%%DRIVERNAME%%/component', ['exports', 'emb
                         resolve({xhr: xhr, textStatus: textStatus},'AJAX Response: '+ opt.url + '(' + xhr.status + ')');
                     }
                 }
-            
+
                 function fail(xhr, textStatus, err) {
                     reject({xhr: xhr, textStatus: textStatus, err: err}, 'AJAX Error:' + opt.url + '(' + xhr.status + ')');
                 }
@@ -414,3 +482,4 @@ define('ui/components/machine/driver-%%DRIVERNAME%%/component', ['exports', 'emb
         isGteStep15: Ember.computed.gte('step', 15),
     });
 });
+*/
