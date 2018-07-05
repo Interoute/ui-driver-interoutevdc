@@ -12,6 +12,7 @@ define('shared/components/node-driver/driver-%%DRIVERNAME%%/component', ['export
   var get = Ember.get;
   var set = Ember.set;
   var alias = Ember.computed.alias;
+  var ajaxPromise = Ember.ajaxPromise;
 
 /* v----- Do not change anything between here
  *       (the DRIVERNAME placeholder will be automatically replaced during build) */
@@ -25,11 +26,50 @@ define('shared/components/node-driver/driver-%%DRIVERNAME%%/component', ['export
     bootstrap: function() {
       let config = get(this, 'globalStore').createRecord({
         type: '%%DRIVERNAME%%Config',
-        cpuCount: 2,
+        cpuCount: 3,
         memorySize: 2048,
+
       });
 
       set(this, 'model.%%DRIVERNAME%%Config', config);
+
+      let regions = [ { "id": "Europe", "name": "EU" }, { "id": "USA", "name": "US" }, { "id": "Asia", "name": "Asia" } ];
+            if ( this.get('model.%%DRIVERNAME%%Config.vdcregion') == '' ) {
+                this.set('model.%%DRIVERNAME%%Config.vdcregion', regions[0].id);
+            }
+
+      set(this, 'avregions', regions);
+    },
+
+    step: 1,
+//    actions:
+    actions: {
+        setTransport(str){
+            this.set('config.transport', str);
+        },
+
+        cloudAuth: function() {
+            this.set('step', 2);
+            this.apiRequest('listZones').then((res) => {
+                let zones = [];
+                res.listzonesresponse.zone.forEach((zone) => {
+                    let obj = {
+                        id: zone.id,
+                        name: zone.name
+                    };
+                zones.push(obj);
+                });
+
+                this.set('model.%%DRIVERNAME%%Config.zoneid', zones[0].id);
+                this.set('avzones', zones);
+                this.set('step', 3);
+            }, (err) => {
+                let errors = this.get('errors') || [];
+                errors.pushObject(this.apiErrorMessage(err, '', '', 'Authentication failure'));
+                this.set('errors', errors);
+                this.set('step', 1);
+            });
+        },
     },
 
     // Add custom validation beyond what can be done from the config API schema
@@ -61,7 +101,92 @@ define('shared/components/node-driver/driver-%%DRIVERNAME%%/component', ['export
         set(this, 'errors', null);
         return true;
       }
-    }
+    },
+
+    apiRequest(command, params) {
+        let url		      = this.get('app.proxyEndpoint') + '/' + this.get('model.%%DRIVERNAME%%Config.apiurl');
+        params		      = params || {};
+        params.command	= command;
+        params.apiKey 	= this.get('model.%%DRIVERNAME%%Config.apikey');
+        params.region	  = this.get('model.%%DRIVERNAME%%Config.vdcregion');
+        params.response	= 'json';
+        console.log("SOMETHING is happening")
+        console.log(params)
+
+        return ajaxPromise({url: url, method: 'POST', dataType: 'json',
+            headers: {
+                'Accept': 'application/json',
+                'X-API-Headers-Restrict': 'Content-Length'
+            },
+            beforeSend: (xhr, settings) => {
+                xhr.setRequestHeader('Content-Type', 'rancher:' + settings.contentType);
+                let qs = settings.data.split('&')
+                        .map((q) => q.replace(/\+/g, '%20'))
+                        .map(Function.prototype.call, String.prototype.toLowerCase)
+                        .sort()
+                        .join('&');
+                settings.data += '&signature=' + encodeURIComponent(AWS.util.crypto.hmac(
+                    this.get('model.%%DRIVERNAME%%Config.secretkey'), qs, 'base64', 'sha1'));
+                return true;
+            },
+            data: params}, true);
+        return {}
+    },
+
+// TODO: from exo.js
+//    apiRequest(command, params) {
+//        let url         = get(this,'app.proxyEndpoint') + '/' + this.exoscaleApi;
+//        params          = params || {};
+//        params.command  = command;
+//        params.apiKey   = get(this,'config.exoscaleApiKey');
+//        params.response = 'json';
+//
+//        return ajaxPromise({url: url,
+//            method: 'POST',
+//            dataType: 'json',
+//            data: params,
+//            headers: {
+//                'Accept': 'application/json',
+//                'X-API-Headers-Restrict': 'Content-Length'
+//            },
+//            beforeSend: (xhr, settings) => {
+//                // Append 'rancher:' to Content-Type
+//                xhr.setRequestHeader('Content-Type',
+//                                      'rancher:' + settings.contentType);
+//
+//                // Compute the signature
+//                let qs = settings.data.split('&')
+//                    .map((q) => q.replace(/\+/g, '%20'))
+//                    .map(Function.prototype.call, String.prototype.toLowerCase)
+//                    .sort()
+//                    .join('&');
+//                settings.data += '&signature=' + encodeURIComponent(AWS.util.crypto.hmac(
+//                    get(this,'config.exoscaleApiSecretKey'), qs, 'base64', 'sha1'));
+//                return true;
+//            },
+//        }, true);
+//    },
+
+
+// TODO: from old ui - should be able to import this instead
+//    ajaxPromise: function(opt, justBody) {
+//        var promise = new Ember.RSVP.Promise(function(resolve,reject) {
+//            Ember.$.ajax(opt).then(success,fail);
+//            function success(body, textStatus, xhr) {
+//                if ( justBody === true ){
+//                    resolve(body, 'AJAX Response: '+ opt.url + '(' + xhr.status + ')');
+//                } else {
+//                    resolve({xhr: xhr, textStatus: textStatus},'AJAX Response: '+ opt.url + '(' + xhr.status + ')');
+//                }
+//            }
+//
+//            function fail(xhr, textStatus, err) {
+//                reject({xhr: xhr, textStatus: textStatus, err: err}, 'AJAX Error:' + opt.url + '(' + xhr.status + ')');
+//            }
+//        },'Raw AJAX Request: '+ opt.url);
+//        return promise;
+//    },
+
     // Any computed properties or custom logic can go here
   });
 });
