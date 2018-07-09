@@ -10,132 +10,201 @@
 <!--</section>-->
 <section class="horizontal-form">
   {{#accordion-list showExpandAll=false as | al expandFn |}}
-        {{!-- This line shows the driver title which you don't have to change --}}
+    {{!-- This line shows the driver title which you don't have to change it --}}
     <div class="over-hr mb-20"><span>{{driverOptionsTitle}}</span></div>
 
-    {{!-- TODO: ADD STUFF HERE: --}}
+    {{!-- Step 1 --}}
+    <section class="box">
+        {{!-- API Key Input --}}
+        <div class="row {{if (eq step 1) 'inline-form'}}">
+            <div class="col span-2 col-inline">
+                <label>API Key</label>
+            </div>
+            {{#if (eq step 1)}}
+                <div class="col span-10">
+                    {{input
+                        type="text"
+                        name="apikey"
+                        classNames="form-control"
+                        placeholder="Paste your API key here..."
+                        value=model.%%DRIVERNAME%%Config.apikey
+                    }}
+                </div>
+            {{else}}
+                <div class="form-control-static">
+                    {{model.%%DRIVERNAME%%Config.apikey}}
+                </div>
+            {{/if}}
+        </div>
 
-    <form>
-        <div class="container-fluid box">
-            <div class="over-hr r-mt20 r-mb20">
-                <span>ACCOUNT ACCESS</span>
+        {{!-- Secret Key Input --}}
+        <div class="row {{if (eq step 1) 'inline-form'}}">
+            <div class="col span-2 col-inline">
+                <label>Secret Key</label>
             </div>
-            <div class="row {{if (eq step 1) 'form-group'}}">
-                <div class="col-sm-12 col-md-2 form-label">
-                    <label class="form-control-static">API Key</label>
+            {{#if (eq step 1)}}
+                <div class="col span-10">
+                    {{input
+                        type="password"
+                        name="secretkey"
+                        classNames="form-control"
+                        placeholder="Paste your API secret key here..."
+                        value=model.%%DRIVERNAME%%Config.secretkey}}
                 </div>
-                <div class="col-sm-12 col-md-10">
-                    {{#if (eq step 1)}}
-                        {{input type="text" autofocus="autofocus" value=model.%%DRIVERNAME%%Config.apikey classNames="form-control" placeholder="Your VDC API Key"}}
-                    {{else}}
-                        <div class="form-control-static">
-                            {{model.%%DRIVERNAME%%Config.apikey}}
-                        </div>
-                    {{/if}}
+            {{else}}
+                <div class="form-control-static">
+                    **************************************************************************************
                 </div>
+            {{/if}}
+        </div>
+
+        {{!-- Region selection --}}
+        <div class="row {{if (eq step 1) 'inline-form'}}">
+            <div class="col span-2 col-inline">
+                <label>VDC Zone{{unless (eq step 1) ":"}}</label>
             </div>
-            <div class="row {{if (eq step 1) 'form-group'}}">
-                <div class="col-sm-12 col-md-2 form-label">
-                    <label class="form-control-static">Secret Key</label>
+            {{#if (eq step 1)}}
+                <div class="col span-4">
+                    {{new-select
+                        classNames="form-control"
+                        value=model.%%DRIVERNAME%%Config.zoneid
+                        content=zones
+                        optionValuePath="id"
+                        optionLabelPath="name"
+                        optionGroupPath="region"
+                        selected="selected"
+                    }}
                 </div>
-                <div class="col-sm-12 col-md-10">
-                    {{#if (eq step 1)}}
-                        {{input type="text" value=model.%%DRIVERNAME%%Config.secretkey classNames="form-control" placeholder="Your VDC Secret Key"}}
-                    {{else}}
-                        <div class="form-control-static">
-                            **************************************************************************************
-                        </div>
-                    {{/if}}
+            {{else}}
+                <div class="form-control-static">
+                    {{model.%%DRIVERNAME%%Config.zonename}}
                 </div>
+            {{/if}}
+        </div>
+
+        {{!-- Template filter selection --}}
+        <div class="row {{if (eq step 1) 'inline-form'}}">
+            <div class="col span-2 col-inline">
+                <label>Template Type{{unless (eq step 1) ":"}}</label>
             </div>
-            <div class="row {{if isStep1 'form-group'}}">
-                <div class="col-sm-12 col-md-2 form-label">
-                    <label class="form-control-static">VDC Region</label>
+            {{#if (eq step 1)}}
+                <div class="col span-4">
+                    {{new-select
+                        classNames="form-control"
+                        value=model.%%DRIVERNAME%%Config.templatefilter
+                        content=templatetype
+                        optionValuePath="id"
+                        optionLabelPath="name"
+                    }}
                 </div>
-                <div class="col-sm-12 col-md-10">
-                    {{#if (eq step 1)}}
-                        {{new-select classNames="form-control" content=avregions prompt='Please select a region' optionLabelPath='name' optionValuePath='id' value=model.%%DRIVERNAME%%Config.vdcregion}}
-                    {{/if}}
+            {{else}}
+                <div class="form-control-static">
+                    {{model.%%DRIVERNAME%%Config.templatefiltername}}
                 </div>
+            {{/if}}
+        </div>
+        {{!-- Form buttons --}}
+        {{#if (eq step 1)}}
+            {{top-errors errors=errors}}
+            <div class="footer-actions">
+                <button {{action "interouteVDCLogin"}} name="submit" class="btn bg-primary">Submit</button>
+                <button {{action "cancel"}} class="btn bg-transparent">{{t 'generic.cancel'}}</button>
+            </div>
+        {{else}}
+            <div class="footer-actions">
+                <button {{action "changeZone"}} name="submit" class="btn bg-primary">Change</button>
+            </div>
+        {{/if}}
+    </section>
+
+
+    {{!-- Step 3 --}}
+    <section class="box {{unless (eq step 3) 'hide'}}">
+        {{!--<div class="over-hr">
+            <span>Network</span>
+        </div>--}}
+
+        {{!-- Network selection --}}
+        <div class="row inline-form">
+            <div class="col span-2 col-inline">
+                <label>Network</label>
+            </div>
+            <div class="col span-10">
+                {{new-select
+                    classNames="form-control"
+                    content=networks
+                    optionLabelPath='name'
+                    optionValuePath='id'
+                    value=model.%%DRIVERNAME%%Config.networkid
+                }}
             </div>
         </div>
-    </form>
-    {{#if (eq step 1)}} {{top-errors errors=errors}}
+        {{!--<div class="over-hr r-mt20 r-mb20">
+            <span>Service Offering</span>
+        </div>--}}
+
+        {{!-- CPU and RAM selection --}}
+        <div class="row inline-form">
+            <div class="col span-2 col-inline">
+                <label>CPU</label>
+            </div>
+            <div class="col span-1 col-inline">
+                {{config.cpu}}
+            </div>
+            <div class="col span-3 col-inline">
+                {{input-slider value=config.cpu valueMin=1 valueMax=12}}
+            </div>
+        </div>
+        <div class="row inline-form">
+            <div class="col span-2 col-inline">
+                <label>RAM</label>
+            </div>
+            <div class="col span-1 col-inline">
+                {{config.ram}}
+            </div>
+            <div>
+                <button {{action "setRam" 0.5}} name="0.5" class="btn bg-primary span-1 col-inline">0.5</button>
+                <button {{action "setRam" 1}} name="1" class="btn bg-primary span-1 col-inline">1</button>
+                <button {{action "setRam" 2}} name="2" class="btn bg-primary span-1 col-inline">2</button>
+                <button {{action "setRam" 4}} name="4" class="btn bg-primary span-1 col-inline">4</button>
+                <button {{action "setRam" 8}} name="8" class="btn bg-primary span-1 col-inline">8</button>
+                <button {{action "setRam" 16}} name="16" class="btn bg-primary span-1 col-inline">16</button>
+                <button {{action "setRam" 32}} name="32" class="btn bg-primary span-1 col-inline">32</button>
+                <button {{action "setRam" 64}} name="64" class="btn bg-primary span-1 col-inline">64</button>
+            </div>
+        </div>
+
+        {{!-- Disk Offering selection --}}
+        <!--<div class="container-fluid">-->
+            <!--<div class="over-hr r-mt20 r-mb20">-->
+                <!--<span>Disk Offering</span>-->
+            <!--</div>-->
+            <!--<div class="row {{if isStep13 'form-group'}}">-->
+                <!--<div class="col-sm-12 col-md-2 form-label">-->
+                    <!--<label class="form-control-static">Disc Type / Disk Size (GB)</label>-->
+                <!--</div>-->
+                <!--<div class="col-sm-12 col-md-8">-->
+                    <!--{{new-select action=(action resetSiblingMenus) classNames="col-sm-12 col-md-6 col-lg-6 form-control" content=avdiskofferings  prompt='Please select a disk offering (extra/DATA disk)' optionLabelPath='name' optionValuePath='id' value=model.%%DRIVERNAME%%Config.diskofferingid }}-->
+                    <!--{{input type="text" value=model.%%DRIVERNAME%%Config.disksize classNames="col-sm-12 col-md-6 col-lg-6 form-control" placeholder="Disk size (GB)"}}-->
+                <!--</div>-->
+            <!--</div>-->
+        <!--</div>-->
+    </section>
+
+    {{#if (eq step 3)}}
+        {{top-errors errors=errors}}
         <div class="footer-actions">
-            <button {{action "cloudAuth"}} name="submit" class="btn btn-primary">Authenticate</button>
-            <button {{action "cancel"}} class="btn btn-link">Cancel</button>
+            <button {{action "stepThree"}} name="submit" class="btn bg-primary"><!--action "selectNetwork"-->Submit</button>
+            <button {{action "cancel"}} class="btn bg-transparent">{{t 'generic.cancel'}}</button>
         </div>
     {{/if}}
 
-    <form>
-        {{!--<div class="row {{if (eq step 1) 'inline-form'}}">--}}
-        <div class="row inline-form">
-            <div class="col span-2 col-inline">
-                <!--<label>t 'nodeDriver.exoscale.apiKey.label'</label>-->
-                <label>API key</label>
-            </div>
-            <div class="col span-10">
-                {{#if (eq step 1)}}
-                    {{input type="text" name="username" classNames="form-control" placeholder="t 'nodeDriver.exoscale.apiKey.placeholder'" value="config.exoscaleApiKey"}}
-                {{else}}
-                    <div>config.exoscaleApiKey</div>
-                {{/if}}
-            </div>
+    <!-- Loading API request -->
+    <section class="horizontal-form r-pt0 {{unless (eq step 2) 'hide'}}">
+        <div class="text-center">
+            <i class="icon icon-spinner icon-spin"></i><i>&nbsp; Please wait...</i>
         </div>
-        <div class="row {{if (eq step 1) 'inline-form'}}">
-            <div class="col span-2 col-inline">
-                <label>t 'nodeDriver.exoscale.secretKey.label'</label>
-            </div>
-            <div class="col span-10">
-                {{#if (eq step 1)}}
-                    {{input type="password" name="password" classNames="form-control" placeholder="t 'nodeDriver.exoscale.secretKey.placeholder'" value="config.exoscaleApiSecretKey"}}
-                {{else}}
-                    <div class="text-muted text-italic">t 'nodeDriver.exoscale.secretKey.provided'</div>
-                {{/if}}
-                {{#if (eq step 1)}}
-                    <p class="text-info">t 'nodeDriver.exoscale.accountHelp'</p>
-                {{/if}}
-            </div>
-        </div>
-
-        {{#if (eq step 1)}}
-            {{top-errors errors=errors}}
-
-            <div class="footer-actions">
-                <button {{!--action "exoscaleLogin"--}} name="submit" class="btn bg-primary">t 'nodeDriver.exoscale.loginAction'</button>
-                <button {{!--action "cancel"--}} class="btn bg-transparent">t 'generic.cancel'</button>
-            </div>
-        {{/if}}
-    </form>
-
-    {{!-- TODO: CLEAN UP --}}
-
-    {{!-- An example input option --}}
-    <div class="row box mt-20">
-      <h4>Instance Options</h4>
-      <div class="row">
-        <div class="col span-2 col-inline">
-          <label>CPUs</label>
-        </div>
-
-        <div class="col span-1">
-          {{config.cpuCount}}
-        </div>
-        <div class="col span-3">
-          {{input-slider value=config.cpuCount valueMin=1 valueMax=32}}
-        </div>
-
-        <div class="col span-2 col-inline">
-          <label>Memory Size</label>
-        </div>
-        <div class="col span-4">
-          <div class="input-group">
-            {{input-integer min=1 value=config.memorySize classNames="form-control"}}
-            <div class="input-group-addon bg-default">MB</div>
-          </div>
-        </div>
-      </div>
-    </div>
+    </section>
 
     {{!-- This following contains the Name, Labels and Engine Options fields --}}
     <div class="over-hr"><span>{{templateOptionsTitle}}</span></div>
@@ -164,6 +233,7 @@
   {{!-- This component shows the Create and Cancel buttons --}}
   {{save-cancel save="save" cancel="cancel"}}
 </section>
+
 
 {{!--<section class="horizontal-form">
     <form>
