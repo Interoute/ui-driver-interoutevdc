@@ -1,13 +1,3 @@
-<!--<section class="horizontal-form">-->
-    <!--<form>-->
-        <!--<div class="container-fluid">-->
-            <!--<div class="over-hr r-mt20 r-mb20">-->
-                <!--<span>ACCOUNT ACCESS</span>-->
-            <!--</div>-->
-            <!--<p>Hello World</p>-->
-        <!--</div>-->
-    <!--</form>-->
-<!--</section>-->
 <section class="horizontal-form">
   {{#accordion-list showExpandAll=false as | al expandFn |}}
     {{!-- This line shows the driver title which you don't have to change it --}}
@@ -28,6 +18,7 @@
                         classNames="form-control"
                         placeholder="Paste your API key here..."
                         value=model.%%DRIVERNAME%%Config.apikey
+                        autocomplete="on"
                     }}
                 </div>
             {{else}}
@@ -49,7 +40,10 @@
                         name="secretkey"
                         classNames="form-control"
                         placeholder="Paste your API secret key here..."
-                        value=model.%%DRIVERNAME%%Config.secretkey}}
+                        value=model.%%DRIVERNAME%%Config.secretkey
+                        autocomplete="on"
+                    }}
+
                 </div>
             {{else}}
                 <div class="form-control-static">
@@ -120,10 +114,6 @@
 
     {{!-- Step 3 --}}
     <section class="box {{unless (eq step 3) 'hide'}}">
-        {{!--<div class="over-hr">
-            <span>Network</span>
-        </div>--}}
-
         {{!-- Network selection --}}
         <div class="row inline-form">
             <div class="col span-2 col-inline">
@@ -139,9 +129,22 @@
                 }}
             </div>
         </div>
-        {{!--<div class="over-hr r-mt20 r-mb20">
-            <span>Service Offering</span>
-        </div>--}}
+
+        {{!-- Template selection --}}
+        <div class="row inline-form">
+            <div class="col span-2 col-inline">
+                <label>Template</label>
+            </div>
+            <div class="col span-10">
+                {{new-select
+                    classNames="form-control"
+                    content=templates
+                    optionLabelPath='name'
+                    optionValuePath='id'
+                    value=model.%%DRIVERNAME%%Config.tempalteid
+                }}
+            </div>
+        </div>
 
         {{!-- CPU and RAM selection --}}
         <div class="row inline-form">
@@ -175,20 +178,33 @@
         </div>
 
         {{!-- Disk Offering selection --}}
-        <!--<div class="container-fluid">-->
-            <!--<div class="over-hr r-mt20 r-mb20">-->
-                <!--<span>Disk Offering</span>-->
-            <!--</div>-->
-            <!--<div class="row {{if isStep13 'form-group'}}">-->
-                <!--<div class="col-sm-12 col-md-2 form-label">-->
-                    <!--<label class="form-control-static">Disc Type / Disk Size (GB)</label>-->
-                <!--</div>-->
-                <!--<div class="col-sm-12 col-md-8">-->
-                    <!--{{new-select action=(action resetSiblingMenus) classNames="col-sm-12 col-md-6 col-lg-6 form-control" content=avdiskofferings  prompt='Please select a disk offering (extra/DATA disk)' optionLabelPath='name' optionValuePath='id' value=model.%%DRIVERNAME%%Config.diskofferingid }}-->
-                    <!--{{input type="text" value=model.%%DRIVERNAME%%Config.disksize classNames="col-sm-12 col-md-6 col-lg-6 form-control" placeholder="Disk size (GB)"}}-->
-                <!--</div>-->
-            <!--</div>-->
-        <!--</div>-->
+        <div class="container-fluid">
+            <div class="row form-group">
+                <div class="col span-2 col-inline">
+                    <label class="form-control-static">Disc Type</label>
+                </div>
+                <div class="col span-10">
+                    {{new-select
+                        content=diskofferings
+                        prompt='Please select a disk offering (extra/DATA disk)'
+                        optionLabelPath='name'
+                        optionValuePath='id'
+                        value=model.%%DRIVERNAME%%Config.diskofferingid
+                    }}
+                </div>
+            </div>
+            <div class="row form-group">
+                <div class="col span-2 col-inline">
+                    <label class="form-control-static">Disk Size (GB)</label>
+                </div>
+                <div class="col span-10">
+                    {{input type="text"
+                        value=model.%%DRIVERNAME%%Config.disksize
+                        placeholder="Disk size (GB)"
+                    }}
+                </div>
+            </div>
+        </div>
     </section>
 
     {{#if (eq step 3)}}

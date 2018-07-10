@@ -12,41 +12,6 @@ define('shared/components/node-driver/driver-%%DRIVERNAME%%/component', ['export
   var get = Ember.get;
   var set = Ember.set;
   var alias = Ember.computed.alias;
-  var REGIONS = [
-    { name: 'Europe',
-      id: 'Europe',
-    },
-    { name: 'Asia',
-      id: 'Asia',
-    },
-    { name: 'USA',
-      id: 'USA',
-    },
-  ];
-//  var ZONES = {
-//      Europe: [
-//          {name: 'Amsterdam', id: '3c43b32b-fadf-4629-b8e9-61fb7a5b9bb8'},
-//          {name: 'Berlin', id: 'fc129b38-d490-4cd9-acf8-838cf7eb168d'},
-//          {name: 'Frankfurt', id: '7144b207-e97e-4e4a-b15d-64a30711e0e7'},
-//          {name: 'Geneva', id: '1ef96ec0-9e51-4502-9a81-045bc37ecc0a'},
-//          {name: 'Istanbul', id: '1ce2fa41-bc99-484c-99b9-b1b6a28487ba'},
-//          {name: 'London', id: 'f6b0d029-8e53-413b-99f3-e0a2a543ee1d'},
-//          {name: 'Madrid', id: 'ddf450f2-51b2-433d-8dea-c871be6de38d'},
-//          {name: 'Milan', id: '58848a37-db49-4518-946a-88911db0ee2b'},
-//          {name: 'Paris', id: '374b937d-2051-4440-b02c-a314dd9cb27e'},
-//          {name: 'Slough', id: '5343ddc2-919f-4d1b-a8e6-59f91d901f8e'},
-//          {name: 'Stockholm', id: 'e564f8cf-efda-4119-b404-b6d00cf434b3'},
-//          {name: 'Zurich', id: 'a5d3e015-0797-4283-b562-84feea6f66af'}
-//      ],
-//      Asia: [
-//          {name: 'Hong Kong', id: 'edcc00ef-1a8e-411b-a46a-b123c20ed8f0'},
-//          {name: 'Singapore', id: 'f2e16beb-b8b1-4f1d-b211-6b6feb6bb394'}
-//      ],
-//      USA: [
-//          {name: 'New York', id: 'a2f03939-16e4-4d7e-b362-b22b4fe8ca09'},
-//          {name: 'Los Angeles', id: '43b96440-497e-4ed3-88c9-e42fddd28d27'}
-//      ],
-//  };
 
   let ZONES = [
       {region: 'Europe', name: 'Amsterdam', id: '3c43b32b-fadf-4629-b8e9-61fb7a5b9bb8'},
@@ -67,8 +32,9 @@ define('shared/components/node-driver/driver-%%DRIVERNAME%%/component', ['export
       {region: 'Asia', name: 'Singapore', id: 'f2e16beb-b8b1-4f1d-b211-6b6feb6bb394'}
   ];
 
-  let TEMPLATE_TYPE = [ {name: 'Public', id: 'featured'},
-                        {name: 'Private', id: 'self'}
+  let TEMPLATE_TYPE = [
+      {name: 'Private', id: 'self'},
+      {name: 'Public', id: 'featured'}
   ];
 
 /* v----- Do not change anything between here
@@ -96,15 +62,8 @@ define('shared/components/node-driver/driver-%%DRIVERNAME%%/component', ['export
             diskofferingid: null,
             disksize: null,
             ram: 1,
+            cpu: 1,
         });
-
-        set(this, 'model.%%DRIVERNAME%%Config', config);
-
-//        if ( this.get('model.%%DRIVERNAME%%Config.vdcregion') == '' ) {
-//            this.set('model.%%DRIVERNAME%%Config.vdcregion', REGIONS[0].name);
-//        }
-//
-//        set(this, 'avregions', REGIONS);
 
         set(this, 'model.%%DRIVERNAME%%Config', config);
         set(this, 'zones', ZONES);
@@ -117,147 +76,71 @@ define('shared/components/node-driver/driver-%%DRIVERNAME%%/component', ['export
     zones: ZONES,
 
     actions: {
-        setTransport(str){
-            this.set('config.transport', str);
-        },
-
         changeZone: function() {
-            this.set('step', 1)
-        },
-
-        convertRam: function() {
-            this.set('model.%%DRIVERNAME%%Config.ram', Math.pow(2, get(this, 'model.%%DRIVERNAME%%Config.ramFlat') - 2));
-            return 3;
+            set(this, 'step', 1)
         },
 
         setRam: function(value) {
-            this.set('model.%%DRIVERNAME%%Config.ram', value);
+            set(this, 'model.%%DRIVERNAME%%Config.ram', value);
         },
 
         // TODO: adopt
         interouteVDCLogin: function() {
-            this.set('step', 2);
-            this.apiRequest('listZones').then((res) => {
-//                let zones = [];
-//                res.listzonesresponse.zone.forEach((zone) => {
-//                    let obj = {
-//                        id: zone.id,
-//                        name: zone.name
-//                    };
-//                zones.push(obj);
-//                });
-//
-//                this.set('model.%%DRIVERNAME%%Config.zoneid', zones[0].id);
-//                this.set('avzones', zones);
-                // Set values to display for already chosen options
-                let zoneid = this.get("model.%%DRIVERNAME%%Config.zoneid");
-                this.set('model.%%DRIVERNAME%%Config.vdcregion', this.listLookup(ZONES, "id", zoneid, "region"));
-                this.set('model.%%DRIVERNAME%%Config.zonename', this.listLookup(ZONES, "id", zoneid, "name"));
-                this.set('model.%%DRIVERNAME%%Config.templatefiltername', this.listLookup(
-                    TEMPLATE_TYPE, "id", this.get("model.%%DRIVERNAME%%Config.templatefilter"), "name"));
+            set(this, 'errors', []);
+            set(this, 'step', 2);
 
-                // TODO: **********************  vvvvvvvvvvvvvvvvvv
-                this.apiRequest('listNetworks', {zoneid: this.get('model.%%DRIVERNAME%%Config.zoneid')}).then((res) => {
-                    let networks = [];
-                    (res.listnetworksresponse.network || []).forEach((net) => {
-                        let obj = {
-                            id: net.id,
-                            name: net.displaytext,
-                        };
-                        networks.push(obj);
-                    });
-                    this.set('networks', networks);
-                    this.set('model.%%DRIVERNAME%%Config.networkid', networks[0].id);
-                }, (err) => {
-                    let errors = this.get('errors') || [];
-                    errors.pushObject(this.apiErrorMessage(err, '', '', 'WARNING No networks could be found - API request failed'));
-                    this.set('errors', errors);
-                    this.set('step', 1);
-                });
-                // TODO: ********************** ^^^^^^^^^^^^^^^
+            // Set values to display for already chosen options
+            let zoneid = get(this, "model.%%DRIVERNAME%%Config.zoneid");
+            set(this, 'model.%%DRIVERNAME%%Config.vdcregion', this.listLookup(ZONES, "id", zoneid, "region"));
+            set(this, 'model.%%DRIVERNAME%%Config.zonename', this.listLookup(ZONES, "id", zoneid, "name"));
+            set(this, 'model.%%DRIVERNAME%%Config.templatefiltername', this.listLookup(
+                TEMPLATE_TYPE, "id", get(this, "model.%%DRIVERNAME%%Config.templatefilter"), "name"));
 
-                // Get a list of networks
-                (res.listnetworksresponse.network || []).forEach((net) => {
-                    let obj = {
-                        id: net.id,
-                        name: net.displaytext,
-                    };
-                    networks.push(obj);
-                });
-                this.set('networks', networks);
-                this.set('model.%%DRIVERNAME%%Config.networkid', networks[0].id);
-                this.set('step', 3);
-            }, (err) => {
-                console.log(err)
-                let errors = this.get('errors') || [];
-                errors.pushObject(this.apiErrorMessage(err, '', '', 'Authentication failure'));
-                this.set('errors', errors);
-                this.set('step', 1);
-                // TODO: temp for testing/development
-                let zoneid = this.get("model.%%DRIVERNAME%%Config.zoneid");
-                this.set('model.%%DRIVERNAME%%Config.vdcregion', this.listLookup(ZONES, "id", zoneid, "region"));
-                this.set('model.%%DRIVERNAME%%Config.zonename', this.listLookup(ZONES, "id", zoneid, "name"));
-                this.set('model.%%DRIVERNAME%%Config.templatefiltername', this.listLookup(
-                    TEMPLATE_TYPE, "id", this.get("model.%%DRIVERNAME%%Config.templatefilter"), "name"));
-//                this.set('step', 3);
-                let networks = [];
-                let res = {"listnetworksresponse":{"count":66,"network":[{"id":"937f8b5d-02b8-4d33-82b9-118c1ebf209f","account":"Interoute Test dummy","acltype":"ACCOUNT","broadcastdomaintype":"Vlan","canusefordeploy":true,"cidr":"192.168.160.0/24","displaytext":"","dns1":"154.15.251.130","dns2":"154.15.251.134","domain":"Interoute Test dummy","domainid":"4c38a0a5-ff04-4794-8250-da4281d48b81","gateway":"192.168.160.1","ispersistent":false,"issystem":false,"name":"","netmask":"255.255.255.0","networkdomain":"csbbbguest.vdc","networkofferingavailability":"Required","networkofferingconservemode":true,"networkofferingdisplaytext":"PrivateWithGatewayServices","networkofferingid":"ac83e102-d56b-4850-9c40-facffe222be0","networkofferingname":"PrivateWithGatewayServices","physicalnetworkid":"fb2dc2bf-c6f8-456e-93b5-5430056e30c9","related":"937f8b5d-02b8-4d33-82b9-118c1ebf209f","restartrequired":false,"specifyipranges":false,"state":"IMPLEMENTED","strechedl2subnet":false,"traffictype":"Guest","type":"ISOLATED","subtype":"internetgateway","zoneid":"7144b207-e97e-4e4a-b15d-64a30711e0e7","zonename":"Frankfurt (ESX)","service":[{"name":"UserData"},{"name":"Lb","capability":[{"canchooseservicecapability":"false","name":"SupportedLBIsolation","value":"dedicated"},{"canchooseservicecapability":"false","name":"SupportedLbAlgorithms","value":"roundrobin,leastconn,source"},{"canchooseservicecapability":"false","name":"LbSchemes","value":"Public"},{"canchooseservicecapability":"false","name":"AutoScaleCounters","value":"[{\"methodname\":\"cpu\",\"paramlist\":[]},{\"methodname\":\"memory\",\"paramlist\":[]}]"},{"canchooseservicecapability":"false","name":"SupportedProtocols","value":"tcp, udp, tcp-proxy"},{"canchooseservicecapability":"false","name":"SupportedStickinessMethods","value":"[{\"methodname\":\"LbCookie\",\"paramlist\":[{\"paramname\":\"cookie-name\",\"required\":false,\"isflag\":false,\"description\":\" \"},{\"paramname\":\"mode\",\"required\":false,\"isflag\":false,\"description\":\" \"},{\"paramname\":\"nocache\",\"required\":false,\"isflag\":true,\"description\":\" \"},{\"paramname\":\"indirect\",\"required\":false,\"isflag\":true,\"description\":\" \"},{\"paramname\":\"postonly\",\"required\":false,\"isflag\":true,\"description\":\" \"},{\"paramname\":\"domain\",\"required\":false,\"isflag\":false,\"description\":\" \"}],\"description\":\"This is loadbalancer cookie based stickiness method.\"},{\"methodname\":\"AppCookie\",\"paramlist\":[{\"paramname\":\"cookie-name\",\"required\":false,\"isflag\":false,\"description\":\" \"},{\"paramname\":\"length\",\"required\":false,\"isflag\":false,\"description\":\" \"},{\"paramname\":\"holdtime\",\"required\":false,\"isflag\":false,\"description\":\" \"},{\"paramname\":\"request-learn\",\"required\":false,\"isflag\":true,\"description\":\" \"},{\"paramname\":\"prefix\",\"required\":false,\"isflag\":true,\"description\":\" \"},{\"paramname\":\"mode\",\"required\":false,\"isflag\":false,\"description\":\" \"}],\"description\":\"This is App session based sticky method. Define session stickiness on an existing application cookie. It can be used only for a specific http traffic\"},{\"methodname\":\"SourceBased\",\"paramlist\":[{\"paramname\":\"tablesize\",\"required\":false,\"isflag\":false,\"description\":\" \"},{\"paramname\":\"expire\",\"required\":false,\"isflag\":false,\"description\":\" \"}],\"description\":\"This is source based Stickiness method, it can be used for any type of protocol.\"}]"}]},{"name":"StaticNat"},{"name":"Dhcp","capability":[{"canchooseservicecapability":"false","name":"DhcpAccrossMultipleSubnets","value":"true"}]},{"name":"PortForwarding"},{"name":"Vpn","capability":[{"canchooseservicecapability":"false","name":"SupportedVpnTypes","value":"pptp,l2tp,ipsec"},{"canchooseservicecapability":"false","name":"VpnTypes","value":"removeaccessvpn"}]},{"name":"SourceNat","capability":[{"canchooseservicecapability":"false","name":"SupportedSourceNatTypes","value":"peraccount"},{"canchooseservicecapability":"false","name":"RedundantRouter","value":"true"}]},{"name":"Dns","capability":[{"canchooseservicecapability":"false","name":"AllowDnsSuffixModification","value":"true"}]},{"name":"Firewall","capability":[{"canchooseservicecapability":"false","name":"SupportedTrafficDirection","value":"ingress, egress"},{"canchooseservicecapability":"false","name":"MultipleIps","value":"true"},{"canchooseservicecapability":"false","name":"TrafficStatistics","value":"per public ip"},{"canchooseservicecapability":"false","name":"SupportedEgressProtocols","value":"tcp,udp,icmp, all"},{"canchooseservicecapability":"false","name":"SupportedProtocols","value":"tcp,udp,icmp"}]}],"tags":[],"dcgid":0},{"id":"d24d7100-9d96-4e72-be86-0696a40a6ce5","acltype":"DOMAIN","broadcastdomaintype":"Vlan","canusefordeploy":true,"cidr":"10.10.29.0/24","displaytext":"20161212VPNtestRelease","dns1":"195.81.155.194","dns2":"195.81.137.130","domain":"Interoute Test dummy","domainid":"4c38a0a5-ff04-4794-8250-da4281d48b81","gateway":"10.10.29.1","ispersistent":false,"issystem":false,"name":"Network Private Direct Connect Interoute Test dummy 1","netmask":"255.255.255.0","networkdomain":"cs1guest.vdc","networkofferingavailability":"Optional","networkofferingconservemode":true,"networkofferingdisplaytext":"IPAC/IPVPN","networkofferingid":"48f6fcab-5a8f-40e5-887e-b2d247b1828c","networkofferingname":"IPAC/IPVPN","physicalnetworkid":"2ae9f292-2e77-427b-8e86-137fa10e78e8","related":"d24d7100-9d96-4e72-be86-0696a40a6ce5","restartrequired":false,"specifyipranges":true,"state":"SETUP","strechedl2subnet":false,"subdomainaccess":"true","traffictype":"Guest","type":"SHARED","subtype":"privatedirectconnect","zoneid":"1ce2fa41-bc99-484c-99b9-b1b6a28487ba","zonename":"Istanbul (ESX)","service":[{"name":"UserData"},{"name":"Dhcp","capability":[{"canchooseservicecapability":"false","name":"DhcpAccrossMultipleSubnets","value":"true"}]},{"name":"Dns","capability":[{"canchooseservicecapability":"false","name":"AllowDnsSuffixModification","value":"true"}]}],"tags":[],"sid":"INT97/IPVPN/vdc-RIIv6hjA","ipreporting":false,"dcgid":37312},{"id":"b94cb1eb-217a-45b2-90fe-f5bb8ed364e3","acltype":"DOMAIN","broadcastdomaintype":"Vlan","canusefordeploy":true,"cidr":"10.123.146.0/24","displaytext":"20170522networktestfromstaging","dns1":"195.81.155.194","dns2":"195.81.137.130","domain":"Interoute Test dummy","domainid":"4c38a0a5-ff04-4794-8250-da4281d48b81","gateway":"10.123.146.254","ispersistent":false,"issystem":false,"name":"Network Private Direct Connect Interoute Test dummy 8","netmask":"255.255.255.0","networkdomain":"cs1guest.vdc","networkofferingavailability":"Optional","networkofferingconservemode":true,"networkofferingdisplaytext":"IPAC/IPVPN","networkofferingid":"48f6fcab-5a8f-40e5-887e-b2d247b1828c","networkofferingname":"IPAC/IPVPN","physicalnetworkid":"2ae9f292-2e77-427b-8e86-137fa10e78e8","related":"b94cb1eb-217a-45b2-90fe-f5bb8ed364e3","restartrequired":false,"specifyipranges":true,"state":"SETUP","strechedl2subnet":false,"subdomainaccess":"true","traffictype":"Guest","type":"SHARED","subtype":"privatedirectconnect","zoneid":"1ce2fa41-bc99-484c-99b9-b1b6a28487ba","zonename":"Istanbul (ESX)","service":[{"name":"UserData"},{"name":"Dhcp","capability":[{"canchooseservicecapability":"false","name":"DhcpAccrossMultipleSubnets","value":"true"}]},{"name":"Dns","capability":[{"canchooseservicecapability":"false","name":"AllowDnsSuffixModification","value":"true"}]}],"tags":[],"sid":"INT97/IPVPN/vdc-sSeiEoqn","ipreporting":false,"dcgid":37867}]}};
-                (res.listnetworksresponse.network || []).forEach((net) => {
-                    let obj = {
-                        id: net.id,
-                        name: net.displaytext,
-                    };
-                    networks.push(obj);
-                });
-                this.set('networks', networks);
-                this.set('model.%%DRIVERNAME%%Config.networkid', networks[0].id);
-                this.set('step', 3);
+            // Send API requests to obtain data and fill dropdowns
+            this.handleApiRequest("Network", {zoneid: get(this, 'model.%%DRIVERNAME%%Config.zoneid')});
+            this.handleApiRequest("Template", {
+                zoneid: get(this, 'model.%%DRIVERNAME%%Config.zoneid'),
+                templatefilter: get(this, 'model.%%DRIVERNAME%%Config.templatefilter')
             });
+            this.handleApiRequest("DiskOffering", {})
         },
+    },
 
-        helloWorld: function() {
-            console.log("SELECT SELECTED")
-        },
+    handleApiRequest: function(resource_type, data) {
+        this.apiRequest("list" + resource_type + "s", data).then((res) => {
+            this.parseApiResponse(res, resource_type.toLowerCase());
+            let errors = get(this, 'errors');
+            if (!errors || Object.keys(errors).length == 0) {
+                set(this, 'step', 3);
+            }
+        }, (err) => {
+            let errors = get(this, 'errors') || [];
+            errors.push(this.apiErrorMessage(err, '', '', "list" + resource_type + "s API request failed"));
+            set(this, 'errors', errors);
+            set(this, 'step', 1);
+        });
+    },
 
-        resetSiblingMenus: function(e) {
-            console.log("e");
-//            $('section.horizontal-form').removeClass('selected-item');
-//            $('select option[value="' + e.id +'"]').closest('section.horizontal-form').addClass('selected-item');
-//
-//            var classStr= $('select option[value="' + e.id +'"]').closest('section.horizontal-form').attr('class');
-//            var start= $('select option[value="' + e.id +'"]').closest('section.horizontal-form').attr('class').indexOf('step');
-//            var end = classStr.substring(start + 4).indexOf(' ');
-//            var stepEdited = Number(classStr.substr(start + 4, end));
-//            this.set('step', stepEdited);
-//
-//            $.each( $('section.horizontal-form.selected-item ~ section.horizontal-form select'), function(key, select){
-//                select.selectedIndex = 1;
-//            });
-        },
-
-        selectZone: function() {
-            this.set('step', 2);
-            this.apiRequest('listNetworks', {zoneid: this.get('model.%%DRIVERNAME%%Config.zoneid')}).then((res) => {
-                let networks = [];
-                (res.listnetworksresponse.network || []).forEach((net) => {
-                    let obj = {
-                        id: net.id,
-                        name: net.displaytext,
-                    };
-                    networks.push(obj);
-                });
-                this.set('networks', networks);
-                // TODO: remove/redo
-                this.set('step', 5);
-                this.set('model.%%DRIVERNAME%%Config.networkid', networks[0].id);
-            }, (err) => {
-                let errors = this.get('errors') || [];
-                errors.pushObject(this.apiErrorMessage(err, '', '', 'WARNING No networks could be found - API request failed'));
-                this.set('errors', errors);
-                this.set('step', 3);
-                // TODO: Temp testing
-            });
-        },
+    parseApiResponse: function(api_response, resource_type) {
+        // Parse an API response and set the corresponding fields in the config
+        let objects = [];
+        window[resource_type] = api_response;
+        (api_response["list" + resource_type + "sresponse"][resource_type] || []).forEach((resource) => {
+            let obj = {
+                id: resource.id,
+                name: resource.displaytext,
+            };
+            objects.push(obj);
+        });
+        set(this, resource_type + "s", objects);
+        if (Object.keys(objects).length == 0) {
+            let errors = get(this, 'errors') || [];
+            errors.push("No " + resource_type + "s found");
+            set(this, 'errors', errors);
+            set(this, 'step', 1);
+        } else {
+            set(this, 'model.%%DRIVERNAME%%Config.' + resource_type + 'id', objects[0].id);
+        }
     },
 
     // TODO: from skeleton
@@ -293,11 +176,11 @@ define('shared/components/node-driver/driver-%%DRIVERNAME%%/component', ['export
     },
 
     apiRequest(command, params) {
-        let url		      = this.get('app.proxyEndpoint') + '/' + this.get('model.%%DRIVERNAME%%Config.apiurl');
+        let url		      = get(this, 'app.proxyEndpoint') + '/' + get(this, 'model.%%DRIVERNAME%%Config.apiurl');
         params		      = params || {};
         params.command	= command;
-        params.apiKey 	= this.get('model.%%DRIVERNAME%%Config.apikey');
-        params.region	  = this.get('model.%%DRIVERNAME%%Config.vdcregion');
+        params.apiKey 	= get(this, 'model.%%DRIVERNAME%%Config.apikey');
+        params.region	  = get(this, 'model.%%DRIVERNAME%%Config.vdcregion');
         params.response	= 'json';
 
         return this.ajaxPromise(
@@ -311,7 +194,6 @@ define('shared/components/node-driver/driver-%%DRIVERNAME%%/component', ['export
                 'X-API-Headers-Restrict': 'Content-Length'
             },
             beforeSend: (xhr, settings) => {
-                console.log("setting")
                 xhr.setRequestHeader('Content-Type', 'rancher:' + settings.contentType);
                 // Compute the signature
                 let qs = settings.data.split('&')
@@ -320,7 +202,7 @@ define('shared/components/node-driver/driver-%%DRIVERNAME%%/component', ['export
                         .sort()
                         .join('&');
                 settings.data += '&signature=' + encodeURIComponent(AWS.util.crypto.hmac(
-                    this.get('model.%%DRIVERNAME%%Config.secretkey'), qs, 'base64', 'sha1'));
+                    get(this, 'model.%%DRIVERNAME%%Config.secretkey'), qs, 'base64', 'sha1'));
                 settings.url += "?" + settings.data;
                 return true;
             }
@@ -361,17 +243,15 @@ define('shared/components/node-driver/driver-%%DRIVERNAME%%/component', ['export
     apiErrorMessage: function(err, kind, prefix, def) {
         let answer	= (err.xhr || {}).responseJSON || {};
         let text	= (answer[kind] || {}).errortext;
-            if (text) {
-                return prefix + ": " + text;
-            } else {
-                return def;
-            }
+        if (text) {
+            return prefix + ": " + text;
+        } else {
+            return def;
+        }
     },
 
-    // Any computed properties or custom logic can go here
   });
 });
-//var hw = "Hello World";
 /*define('ui/components/machine/driver-%%DRIVERNAME%%/component', ['exports', 'ember', 'ui/mixins/driver', 'ui/components/new-select/component'],
     function(exports, _ember, _uiMixinsDriver, _newSelect) {
         var Ember = _ember.default;
