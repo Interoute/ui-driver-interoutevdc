@@ -32,7 +32,7 @@ define('shared/components/node-driver/driver-%%DRIVERNAME%%/component', ['export
       {region: 'Asia', name: 'Singapore', id: 'f2e16beb-b8b1-4f1d-b211-6b6feb6bb394'}
   ];
 
-  let TEMPLATE_TYPE = [
+  let TEMPLATE_TYPES = [
       {name: 'Private', id: 'self'},
       {name: 'Public', id: 'featured'}
   ];
@@ -59,21 +59,19 @@ define('shared/components/node-driver/driver-%%DRIVERNAME%%/component', ['export
             serviceofferingid: null,
             diskofferingid: null,
             disksize: null,
-            ram: 1,
-            cpu: 1,
-            templatefilter: TEMPLATE_TYPE[0].id,
+            templatefilter: TEMPLATE_TYPES[0].id,
             location: null,
             size: null,
         });
 
         set(this, 'model.%%DRIVERNAME%%Config', config);
-        set(this, 'zones', ZONES);
-        set(this, 'templatetype', TEMPLATE_TYPE);
-
     },
 
     step: 1,
     zones: ZONES,
+    cpu: 1,
+    ram: 1,
+    templatetypes: TEMPLATE_TYPES,
 
     actions: {
         changeZone: function() {
@@ -81,7 +79,7 @@ define('shared/components/node-driver/driver-%%DRIVERNAME%%/component', ['export
         },
 
         setRam: function(value) {
-            set(this, 'model.%%DRIVERNAME%%Config.ram', value);
+            set(this, 'ram', value);
             this.updateServiceOffering();
         },
 
@@ -97,9 +95,8 @@ define('shared/components/node-driver/driver-%%DRIVERNAME%%/component', ['export
             let zoneid = get(this, 'model.%%DRIVERNAME%%Config.zoneid');
             set(this, 'model.%%DRIVERNAME%%Config.vdcregion', this.listLookup(ZONES, 'id', zoneid, 'region'));
             set(this, 'model.%%DRIVERNAME%%Config.location', this.listLookup(ZONES, 'id', zoneid, 'name'));
-            set(this, 'model.%%DRIVERNAME%%Config.Location', this.listLookup(ZONES, 'id', zoneid, 'name'));
             set(this, 'model.%%DRIVERNAME%%Config.templatefiltername', this.listLookup(
-                TEMPLATE_TYPE, 'id', get(this, 'model.%%DRIVERNAME%%Config.templatefilter'), 'name'));
+                TEMPLATE_TYPES, 'id', get(this, 'model.%%DRIVERNAME%%Config.templatefilter'), 'name'));
 
             // Send API requests to obtain data and fill dropdowns
             this.handleApiRequest('Network', {zoneid: get(this, 'model.%%DRIVERNAME%%Config.zoneid')}, 'displaytext');
@@ -117,7 +114,7 @@ define('shared/components/node-driver/driver-%%DRIVERNAME%%/component', ['export
     },
 
     updateServiceOffering: function() {
-        let offering_name = get(this, 'model.%%DRIVERNAME%%Config.ram') * 1024 + '-' + get(this, 'model.%%DRIVERNAME%%Config.cpu');
+        let offering_name = get(this, 'ram') * 1024 + '-' + get(this, 'cpu');
         get(this, 'serviceofferings').forEach((offering) => {
             if (offering.name == offering_name) {
                 set(this, 'model.%%DRIVERNAME%%Config.serviceofferingid', offering.id);

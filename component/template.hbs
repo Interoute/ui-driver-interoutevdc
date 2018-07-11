@@ -86,9 +86,10 @@
                     {{new-select
                         classNames="form-control"
                         value=model.%%DRIVERNAME%%Config.templatefilter
-                        content=templatetype
+                        content=templatetypes
                         optionValuePath="id"
                         optionLabelPath="name"
+                        selected="selected"
                     }}
                 </div>
             {{else}}
@@ -152,10 +153,10 @@
                 <label>CPU</label>
             </div>
             <div class="col span-1 col-inline">
-                {{config.cpu}}
+                {{cpu}}
             </div>
             <div class="col span-3 col-inline">
-                {{input-slider value=config.cpu valueMin=1 valueMax=12 upFn=(action "updateServiceOffering")}}
+                {{input-slider value=cpu valueMin=1 valueMax=12 upFn=(action "updateServiceOffering")}}
             </div>
         </div>
         <div class="row inline-form">
@@ -163,7 +164,7 @@
                 <label>RAM</label>
             </div>
             <div class="col span-1 col-inline">
-                {{config.ram}}
+                {{ram}}
             </div>
             <div>
                 <button {{action "setRam" 1}} name="1" class="btn bg-primary span-1 col-inline ram-button">1</button>
