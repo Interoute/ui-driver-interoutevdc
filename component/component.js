@@ -131,7 +131,7 @@ define('shared/components/node-driver/driver-%%DRIVERNAME%%/component', ['export
             }
         }, (err) => {
             let errors = get(this, 'errors') || [];
-            errors.push(this.apiErrorMessage(err, '', '', 'list' + resource_type + 's API request failed'));
+            errors.pushObject('list' + resource_type + 's API request failed');
             set(this, 'errors', errors);
             set(this, 'step', 1);
         });
@@ -155,7 +155,7 @@ define('shared/components/node-driver/driver-%%DRIVERNAME%%/component', ['export
         set(this, resource_type + 's', objects);
         if (Object.keys(objects).length == 0) {
             let errors = get(this, 'errors') || [];
-            errors.push('No ' + resource_type + 's found');
+            errors.pushObject('No ' + resource_type + 's found');
             set(this, 'errors', errors);
             set(this, 'step', 1);
         } else {
@@ -225,16 +225,6 @@ define('shared/components/node-driver/driver-%%DRIVERNAME%%/component', ['export
             }
         }, 'Raw AJAX Request: ' + opt.url);
         return promise;
-    },
-
-    apiErrorMessage: function(err, kind, prefix, def) {
-        let answer	= (err.xhr || {}).responseJSON || {};
-        let text	= (answer[kind] || {}).errortext;
-        if (text) {
-            return prefix + ': ' + text;
-        } else {
-            return def;
-        }
     },
 
     // Add custom validation beyond what can be done from the config API schema
