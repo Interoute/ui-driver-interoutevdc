@@ -48,13 +48,11 @@ define('shared/components/node-driver/driver-%%DRIVERNAME%%/component', ['export
     // Write your component here, starting with setting 'model' to a machine with your config populated
     bootstrap: function() {
         let config = get(this, 'globalStore').createRecord({
-            cpuCount: 3,  // TODO: remove
-            memorySize: 2048,  // TODO: remove
             type: '%%DRIVERNAME%%Config',
             apiurl: 'https://myservices.interoute.com/myservices/api/vdc',
             apikey: '',
             secretkey: '',
-            zoneid: null,
+            zoneid: ZONES[0].id,
             vdcregion: 'Europe',
             networkid: null,
             templateid: null,
@@ -63,12 +61,14 @@ define('shared/components/node-driver/driver-%%DRIVERNAME%%/component', ['export
             disksize: null,
             ram: 1,
             cpu: 1,
+            templatefilter: TEMPLATE_TYPE[0].id,
+            location: null,
+            size: null,
         });
 
         set(this, 'model.%%DRIVERNAME%%Config', config);
         set(this, 'zones', ZONES);
         set(this, 'templatetype', TEMPLATE_TYPE);
-        set(this, 'model.%%DRIVERNAME%%Config.zoneid', ZONES[0].id);
 
     },
 
@@ -82,9 +82,13 @@ define('shared/components/node-driver/driver-%%DRIVERNAME%%/component', ['export
 
         setRam: function(value) {
             set(this, 'model.%%DRIVERNAME%%Config.ram', value);
+            this.updateServiceOffering();
         },
 
-        // TODO: adopt
+        updateServiceOffering: function() {
+            this.updateServiceOffering();
+        },
+
         interouteVDCLogin: function() {
             set(this, 'errors', []);
             set(this, 'step', 2);
@@ -92,23 +96,40 @@ define('shared/components/node-driver/driver-%%DRIVERNAME%%/component', ['export
             // Set values to display for already chosen options
             let zoneid = get(this, "model.%%DRIVERNAME%%Config.zoneid");
             set(this, 'model.%%DRIVERNAME%%Config.vdcregion', this.listLookup(ZONES, "id", zoneid, "region"));
-            set(this, 'model.%%DRIVERNAME%%Config.zonename', this.listLookup(ZONES, "id", zoneid, "name"));
+            set(this, 'model.%%DRIVERNAME%%Config.location', this.listLookup(ZONES, "id", zoneid, "name"));
+            set(this, 'model.%%DRIVERNAME%%Config.Location', this.listLookup(ZONES, "id", zoneid, "name"));
             set(this, 'model.%%DRIVERNAME%%Config.templatefiltername', this.listLookup(
                 TEMPLATE_TYPE, "id", get(this, "model.%%DRIVERNAME%%Config.templatefilter"), "name"));
 
             // Send API requests to obtain data and fill dropdowns
-            this.handleApiRequest("Network", {zoneid: get(this, 'model.%%DRIVERNAME%%Config.zoneid')});
-            this.handleApiRequest("Template", {
-                zoneid: get(this, 'model.%%DRIVERNAME%%Config.zoneid'),
-                templatefilter: get(this, 'model.%%DRIVERNAME%%Config.templatefilter')
-            });
-            this.handleApiRequest("DiskOffering", {})
+            this.handleApiRequest("Network", {zoneid: get(this, 'model.%%DRIVERNAME%%Config.zoneid')}, "displaytext");
+            this.handleApiRequest(
+                "Template",
+                {
+                    zoneid: get(this, 'model.%%DRIVERNAME%%Config.zoneid'),
+                    templatefilter: get(this, 'model.%%DRIVERNAME%%Config.templatefilter')
+                },
+                "displaytext",
+                function(d) { return !d.isfeatured || d.name.toLowerCase().includes("rancher"); }
+            );
+            this.handleApiRequest("DiskOffering", {}, "displaytext", function(d) { return d.disksize == 0; });
+            this.handleApiRequest("ServiceOffering", {}, "name");
+
         },
     },
 
-    handleApiRequest: function(resource_type, data) {
+    updateServiceOffering: function() {
+        let offering_name = get(this, 'model.%%DRIVERNAME%%Config.ram') * 1024 + "-" + get(this, 'model.%%DRIVERNAME%%Config.cpu');
+        get(this, 'serviceofferings').forEach((offering) => {
+            if (offering.name == offering_name) {
+                set(this, 'model.%%DRIVERNAME%%Config.serviceofferingid', offering.id);
+            }
+        })
+    },
+
+    handleApiRequest: function(resource_type, data, field_name, filter_function) {
         this.apiRequest("list" + resource_type + "s", data).then((res) => {
-            this.parseApiResponse(res, resource_type.toLowerCase());
+            this.parseApiResponse(res, resource_type.toLowerCase(), field_name, filter_function);
             let errors = get(this, 'errors');
             if (!errors || Object.keys(errors).length == 0) {
                 set(this, 'step', 3);
@@ -121,16 +142,18 @@ define('shared/components/node-driver/driver-%%DRIVERNAME%%/component', ['export
         });
     },
 
-    parseApiResponse: function(api_response, resource_type) {
+    parseApiResponse: function(api_response, resource_type, field_name, filter_function) {
         // Parse an API response and set the corresponding fields in the config
         let objects = [];
         window[resource_type] = api_response;
         (api_response["list" + resource_type + "sresponse"][resource_type] || []).forEach((resource) => {
-            let obj = {
-                id: resource.id,
-                name: resource.displaytext,
-            };
-            objects.push(obj);
+            if (!filter_function || filter_function(resource)){
+                let obj = {
+                    id: resource.id,
+                    name: resource[field_name],
+                };
+                objects.push(obj);
+            }
         });
         set(this, resource_type + "s", objects);
         if (Object.keys(objects).length == 0) {
@@ -140,38 +163,6 @@ define('shared/components/node-driver/driver-%%DRIVERNAME%%/component', ['export
             set(this, 'step', 1);
         } else {
             set(this, 'model.%%DRIVERNAME%%Config.' + resource_type + 'id', objects[0].id);
-        }
-    },
-
-    // TODO: from skeleton
-    // Add custom validation beyond what can be done from the config API schema
-    validate() {
-        // Get generic API validation errors
-        this._super();
-        var errors = get(this, 'errors')||[];
-        if ( !get(this, 'model.name') ) {
-          errors.push('Name is required');
-        }
-
-        // Add more specific errors
-
-        // Check something and add an error entry if it fails:
-        if ( parseInt(get(this, 'config.memorySize'),10) < 1024 )
-        {
-          errors.push('Memory Size must be at least 1024 MB');
-        }
-
-        // Set the array of errors for display,
-        // and return true if saving should continue.
-        if ( get(errors, 'length') )
-        {
-          set(this, 'errors', errors);
-          return false;
-        }
-        else
-        {
-          set(this, 'errors', null);
-          return true;
         }
     },
 
@@ -220,7 +211,6 @@ define('shared/components/node-driver/driver-%%DRIVERNAME%%/component', ['export
         return rv;
     },
 
-// TODO: from old ui - should be able to import this instead --- maybe not, but this is an exact copy of https://github.com/rancher/ember-api-store/blob/master/addon/utils/ajax-promise.js
     ajaxPromise: function(opt, justBody) {
         var promise = new Ember.RSVP.Promise(function(resolve, reject) {
             Ember.$.ajax(opt).then(success, fail);
@@ -247,6 +237,20 @@ define('shared/components/node-driver/driver-%%DRIVERNAME%%/component', ['export
             return prefix + ": " + text;
         } else {
             return def;
+        }
+    },
+
+    // Add custom validation beyond what can be done from the config API schema
+    validate() {
+        // Get generic API validation errors
+        this._super();
+        var errors = get(this, 'errors') || [];
+
+        // Set the array of errors for display, and return true if saving should continue.
+        if (get(errors, 'length')) {
+            return false;
+        } else {
+            return true;
         }
     },
 

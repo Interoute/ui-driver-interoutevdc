@@ -71,7 +71,7 @@
                 </div>
             {{else}}
                 <div class="form-control-static">
-                    {{model.%%DRIVERNAME%%Config.zonename}}
+                    {{model.%%DRIVERNAME%%Config.location}}
                 </div>
             {{/if}}
         </div>
@@ -155,7 +155,7 @@
                 {{config.cpu}}
             </div>
             <div class="col span-3 col-inline">
-                {{input-slider value=config.cpu valueMin=1 valueMax=12}}
+                {{input-slider value=config.cpu valueMin=1 valueMax=12 upFn=(action "updateServiceOffering")}}
             </div>
         </div>
         <div class="row inline-form">
@@ -166,7 +166,6 @@
                 {{config.ram}}
             </div>
             <div>
-                <button {{action "setRam" 0.5}} name="0.5" class="btn bg-primary span-1 col-inline">0.5</button>
                 <button {{action "setRam" 1}} name="1" class="btn bg-primary span-1 col-inline">1</button>
                 <button {{action "setRam" 2}} name="2" class="btn bg-primary span-1 col-inline">2</button>
                 <button {{action "setRam" 4}} name="4" class="btn bg-primary span-1 col-inline">4</button>
@@ -207,13 +206,14 @@
         </div>
     </section>
 
-    {{#if (eq step 3)}}
+    {{!--{{#if (eq step 3)}}
         {{top-errors errors=errors}}
         <div class="footer-actions">
-            <button {{action "stepThree"}} name="submit" class="btn bg-primary"><!--action "selectNetwork"-->Submit</button>
+            {{save-cancel save="save" cancel="cancel"}}
+            <button {{action "evaluateAndSave"}} name="submit" class="btn bg-primary"><!--action "selectNetwork"-->Submit</button>
             <button {{action "cancel"}} class="btn bg-transparent">{{t 'generic.cancel'}}</button>
         </div>
-    {{/if}}
+    {{/if}}--}}
 
     <!-- Loading API request -->
     <section class="horizontal-form r-pt0 {{unless (eq step 2) 'hide'}}">
@@ -243,13 +243,9 @@
     }}
   {{/accordion-list}}
 
-  {{!-- This component shows errors produced by validate() in the component --}}
-  {{top-errors errors=errors}}
-
   {{!-- This component shows the Create and Cancel buttons --}}
   {{save-cancel save="save" cancel="cancel"}}
 </section>
-
 
 {{!--<section class="horizontal-form">
     <form>
