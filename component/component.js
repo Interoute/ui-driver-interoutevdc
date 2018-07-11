@@ -94,32 +94,30 @@ define('shared/components/node-driver/driver-%%DRIVERNAME%%/component', ['export
             set(this, 'step', 2);
 
             // Set values to display for already chosen options
-            let zoneid = get(this, "model.%%DRIVERNAME%%Config.zoneid");
-            set(this, 'model.%%DRIVERNAME%%Config.vdcregion', this.listLookup(ZONES, "id", zoneid, "region"));
-            set(this, 'model.%%DRIVERNAME%%Config.location', this.listLookup(ZONES, "id", zoneid, "name"));
-            set(this, 'model.%%DRIVERNAME%%Config.Location', this.listLookup(ZONES, "id", zoneid, "name"));
+            let zoneid = get(this, 'model.%%DRIVERNAME%%Config.zoneid');
+            set(this, 'model.%%DRIVERNAME%%Config.vdcregion', this.listLookup(ZONES, 'id', zoneid, 'region'));
+            set(this, 'model.%%DRIVERNAME%%Config.location', this.listLookup(ZONES, 'id', zoneid, 'name'));
+            set(this, 'model.%%DRIVERNAME%%Config.Location', this.listLookup(ZONES, 'id', zoneid, 'name'));
             set(this, 'model.%%DRIVERNAME%%Config.templatefiltername', this.listLookup(
-                TEMPLATE_TYPE, "id", get(this, "model.%%DRIVERNAME%%Config.templatefilter"), "name"));
+                TEMPLATE_TYPE, 'id', get(this, 'model.%%DRIVERNAME%%Config.templatefilter'), 'name'));
 
             // Send API requests to obtain data and fill dropdowns
-            this.handleApiRequest("Network", {zoneid: get(this, 'model.%%DRIVERNAME%%Config.zoneid')}, "displaytext");
-            this.handleApiRequest(
-                "Template",
-                {
-                    zoneid: get(this, 'model.%%DRIVERNAME%%Config.zoneid'),
-                    templatefilter: get(this, 'model.%%DRIVERNAME%%Config.templatefilter')
-                },
-                "displaytext",
-                function(d) { return !d.isfeatured || d.name.toLowerCase().includes("rancher"); }
-            );
-            this.handleApiRequest("DiskOffering", {}, "displaytext", function(d) { return d.disksize == 0; });
-            this.handleApiRequest("ServiceOffering", {}, "name");
-
+            this.handleApiRequest('Network', {zoneid: get(this, 'model.%%DRIVERNAME%%Config.zoneid')}, 'displaytext');
+            let list_templates_data = {
+                zoneid: get(this, 'model.%%DRIVERNAME%%Config.zoneid'),
+                templatefilter: get(this, 'model.%%DRIVERNAME%%Config.templatefilter')
+            }
+            if (get(this, 'model.%%DRIVERNAME%%Config.templatefilter') == 'featured') {
+                list_templates_data['keyword'] = 'ranchernode';
+            }
+            this.handleApiRequest('Template', list_templates_data, 'displaytext');
+            this.handleApiRequest('DiskOffering', {}, 'displaytext', {id: null, name: 'No extra disks'}, function(d) { return d.disksize == 0; });
+            this.handleApiRequest('ServiceOffering', {}, 'name');
         },
     },
 
     updateServiceOffering: function() {
-        let offering_name = get(this, 'model.%%DRIVERNAME%%Config.ram') * 1024 + "-" + get(this, 'model.%%DRIVERNAME%%Config.cpu');
+        let offering_name = get(this, 'model.%%DRIVERNAME%%Config.ram') * 1024 + '-' + get(this, 'model.%%DRIVERNAME%%Config.cpu');
         get(this, 'serviceofferings').forEach((offering) => {
             if (offering.name == offering_name) {
                 set(this, 'model.%%DRIVERNAME%%Config.serviceofferingid', offering.id);
@@ -127,26 +125,28 @@ define('shared/components/node-driver/driver-%%DRIVERNAME%%/component', ['export
         })
     },
 
-    handleApiRequest: function(resource_type, data, field_name, filter_function) {
-        this.apiRequest("list" + resource_type + "s", data).then((res) => {
-            this.parseApiResponse(res, resource_type.toLowerCase(), field_name, filter_function);
+    handleApiRequest: function(resource_type, data, field_name, first_value, filter_function) {
+        this.apiRequest('list' + resource_type + 's', data).then((res) => {
+            this.parseApiResponse(res, resource_type.toLowerCase(), field_name, first_value, filter_function);
             let errors = get(this, 'errors');
             if (!errors || Object.keys(errors).length == 0) {
                 set(this, 'step', 3);
             }
         }, (err) => {
             let errors = get(this, 'errors') || [];
-            errors.push(this.apiErrorMessage(err, '', '', "list" + resource_type + "s API request failed"));
+            errors.push(this.apiErrorMessage(err, '', '', 'list' + resource_type + 's API request failed'));
             set(this, 'errors', errors);
             set(this, 'step', 1);
         });
     },
 
-    parseApiResponse: function(api_response, resource_type, field_name, filter_function) {
+    parseApiResponse: function(api_response, resource_type, field_name, first_value, filter_function) {
         // Parse an API response and set the corresponding fields in the config
         let objects = [];
-        window[resource_type] = api_response;
-        (api_response["list" + resource_type + "sresponse"][resource_type] || []).forEach((resource) => {
+        if (first_value) {
+            objects.push(first_value);
+        }
+        (api_response['list' + resource_type + 'sresponse'][resource_type] || []).forEach((resource) => {
             if (!filter_function || filter_function(resource)){
                 let obj = {
                     id: resource.id,
@@ -155,10 +155,10 @@ define('shared/components/node-driver/driver-%%DRIVERNAME%%/component', ['export
                 objects.push(obj);
             }
         });
-        set(this, resource_type + "s", objects);
+        set(this, resource_type + 's', objects);
         if (Object.keys(objects).length == 0) {
             let errors = get(this, 'errors') || [];
-            errors.push("No " + resource_type + "s found");
+            errors.push('No ' + resource_type + 's found');
             set(this, 'errors', errors);
             set(this, 'step', 1);
         } else {
@@ -194,7 +194,7 @@ define('shared/components/node-driver/driver-%%DRIVERNAME%%/component', ['export
                         .join('&');
                 settings.data += '&signature=' + encodeURIComponent(AWS.util.crypto.hmac(
                     get(this, 'model.%%DRIVERNAME%%Config.secretkey'), qs, 'base64', 'sha1'));
-                settings.url += "?" + settings.data;
+                settings.url += '?' + settings.data;
                 return true;
             }
         }, true);
@@ -202,7 +202,7 @@ define('shared/components/node-driver/driver-%%DRIVERNAME%%/component', ['export
 
     listLookup: function(list, sourceField, value, targetField) {
         // Look up the value of another field of a dictionary which is in a list
-        let rv = "";
+        let rv = '';
         list.forEach((element) => {
             if (element[sourceField] == value) {
                 rv = element[targetField];
@@ -234,7 +234,7 @@ define('shared/components/node-driver/driver-%%DRIVERNAME%%/component', ['export
         let answer	= (err.xhr || {}).responseJSON || {};
         let text	= (answer[kind] || {}).errortext;
         if (text) {
-            return prefix + ": " + text;
+            return prefix + ': ' + text;
         } else {
             return def;
         }

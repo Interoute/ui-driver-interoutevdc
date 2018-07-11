@@ -1,12 +1,12 @@
 <section class="horizontal-form">
   {{#accordion-list showExpandAll=false as | al expandFn |}}
-    {{!-- This line shows the driver title which you don't have to change it --}}
+    {{!-- This line shows the driver title which you don't have to change --}}
     <div class="over-hr mb-20"><span>{{driverOptionsTitle}}</span></div>
 
     {{!-- Step 1 --}}
     <section class="box">
         {{!-- API Key Input --}}
-        <div class="row {{if (eq step 1) 'inline-form'}}">
+        <div class="row {{if (eq step 1) "inline-form"}}">
             <div class="col span-2 col-inline">
                 <label>API Key</label>
             </div>
@@ -29,7 +29,7 @@
         </div>
 
         {{!-- Secret Key Input --}}
-        <div class="row {{if (eq step 1) 'inline-form'}}">
+        <div class="row {{if (eq step 1) "inline-form"}}">
             <div class="col span-2 col-inline">
                 <label>Secret Key</label>
             </div>
@@ -53,7 +53,7 @@
         </div>
 
         {{!-- Region selection --}}
-        <div class="row {{if (eq step 1) 'inline-form'}}">
+        <div class="row {{if (eq step 1) "inline-form"}}">
             <div class="col span-2 col-inline">
                 <label>VDC Zone{{unless (eq step 1) ":"}}</label>
             </div>
@@ -77,7 +77,7 @@
         </div>
 
         {{!-- Template filter selection --}}
-        <div class="row {{if (eq step 1) 'inline-form'}}">
+        <div class="row {{if (eq step 1) "inline-form"}}">
             <div class="col span-2 col-inline">
                 <label>Template Type{{unless (eq step 1) ":"}}</label>
             </div>
@@ -102,7 +102,7 @@
             {{top-errors errors=errors}}
             <div class="footer-actions">
                 <button {{action "interouteVDCLogin"}} name="submit" class="btn bg-primary">Submit</button>
-                <button {{action "cancel"}} class="btn bg-transparent">{{t 'generic.cancel'}}</button>
+                <button {{action "cancel"}} class="btn bg-transparent">{{t "generic.cancel"}}</button>
             </div>
         {{else}}
             <div class="footer-actions">
@@ -113,7 +113,7 @@
 
 
     {{!-- Step 3 --}}
-    <section class="box {{unless (eq step 3) 'hide'}}">
+    <section class="box {{unless (eq step 3) "hide"}}">
         {{!-- Network selection --}}
         <div class="row inline-form">
             <div class="col span-2 col-inline">
@@ -123,8 +123,8 @@
                 {{new-select
                     classNames="form-control"
                     content=networks
-                    optionLabelPath='name'
-                    optionValuePath='id'
+                    optionLabelPath="name"
+                    optionValuePath="id"
                     value=model.%%DRIVERNAME%%Config.networkid
                 }}
             </div>
@@ -139,8 +139,8 @@
                 {{new-select
                     classNames="form-control"
                     content=templates
-                    optionLabelPath='name'
-                    optionValuePath='id'
+                    optionLabelPath="name"
+                    optionValuePath="id"
                     value=model.%%DRIVERNAME%%Config.tempalteid
                 }}
             </div>
@@ -185,9 +185,8 @@
                 <div class="col span-10">
                     {{new-select
                         content=diskofferings
-                        prompt='Please select a disk offering (extra/DATA disk)'
-                        optionLabelPath='name'
-                        optionValuePath='id'
+                        optionLabelPath="name"
+                        optionValuePath="id"
                         value=model.%%DRIVERNAME%%Config.diskofferingid
                     }}
                 </div>
@@ -207,7 +206,7 @@
     </section>
 
     <!-- Loading API request -->
-    <section class="horizontal-form r-pt0 {{unless (eq step 2) 'hide'}}">
+    <section class="horizontal-form r-pt0 {{unless (eq step 2) "hide"}}">
         <div class="text-center">
             <i class="icon icon-spinner icon-spin"></i><i>&nbsp; Please wait...</i>
         </div>
@@ -223,7 +222,7 @@
 
     {{form-user-labels
       initialLabels=labelResource.labels
-      setLabels=(action 'setLabels')
+      setLabels=(action "setLabels")
       expandAll=expandAll
       expand=(action expandFn)
     }}
