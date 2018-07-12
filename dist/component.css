@@ -1,0 +1,11 @@
+.machine-driver.interoutevdc {
+    background-image: url('interoutevdc.svg');
+}
+
+.slider {
+    margin-top: 6px;
+}
+
+.ram-button {
+    margin-top: 6px;
+}
